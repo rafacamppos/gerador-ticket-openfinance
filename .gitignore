@@ -11,7 +11,7 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 
 # Secrets
-.secrets.local.json
+.env
 
 # Runtime data
 pids
