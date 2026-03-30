@@ -462,8 +462,8 @@ test('createSession uses backend configured credentials when payload is empty', 
     assert.deepStrictEqual(captured, {
       path: '/login',
       body: {
-        user_name: 'atendimento-open-finance@santander.com.br',
-        password: 'TimeOpenfinance@1',
+        user_name: 'atendimento-open-finance@sxxxxxx.com.br',
+        password: 'xxxxxxxxxxx',
       },
     });
   } finally {

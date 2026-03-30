@@ -34,6 +34,9 @@ Exemplos:
 - Priorizar clareza em vez de abstrações desnecessárias
 - Reutilizar padrões já existentes no projeto antes de criar novos
 
+## Regras do ticket flow
+- Cada equipe só pode visualizar ticket que a sua equipe esta owner (current_stage)
+
 ## Desenvolvimento de features
 Antes de implementar qualquer feature:
 1. Identificar arquivos similares no projeto
