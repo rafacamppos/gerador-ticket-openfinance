@@ -1,0 +1,266 @@
+{
+	"info": {
+		"_postman_id": "f219e086-7169-4636-85be-21950ef973bf",
+		"name": "Desenvolvimento aplicacao ticket",
+		"description": "Collection baseada na documentação OpenAPI para integração com o sistema SysAid do Open Finance Brasil.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "12464643"
+	},
+	"item": [
+		{
+			"name": "Login",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"user_name\": \"{{USER_NAME}}\",\n  \"password\": \"{{PASSWORD}}\"\n}"
+				},
+				"url": {
+					"raw": "{{BASE_URL}}/login",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Consultar lista de chamados",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{BASE_URL}}/sr?assigned_group={{GROUP_ID}}&problem_type=Incidentes_APIs_Erros",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"sr"
+					],
+					"query": [
+						{
+							"key": "assigned_group",
+							"value": "{{GROUP_ID}}"
+						},
+						{
+							"key": "problem_type",
+							"value": "Incidentes_APIs_Erros"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Consultar Chamado Específico",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{BASE_URL}}/sr/{{TICKET_ID}}",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"sr",
+						"{{TICKET_ID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Abrir Chamado",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"info\": [\n    {\"key\":\"problem_type\",\"value\":\"Incidentes_Diretório_Erro\"},\n    {\"key\":\"title\",\"value\":\"Teste de Abertura via API\"},\n    {\"key\":\"description\",\"value\":\"Chamado aberto automaticamente via Postman\"}\n  ]\n}"
+				},
+				"url": {
+					"raw": "{{BASE_URL}}/sr?type=1&template=20",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"sr"
+					],
+					"query": [
+						{
+							"key": "type",
+							"value": "1"
+						},
+						{
+							"key": "template",
+							"value": "20"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Atualizar Chamado",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": \"{{TICKET_ID}}\",\n  \"info\": [\n    {\"key\": \"status\", \"value\": \"8\"},\n    {\"key\": \"notes\", \"value\": [{\"userName\": \"Analista\",\"createDate\": 1647019229000,\"text\": \"Nota adicionada via Postman\"}]}\n  ]\n}"
+				},
+				"url": {
+					"raw": "{{BASE_URL}}/sr/{{TICKET_ID}}",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"sr",
+						"{{TICKET_ID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Adicionar Anexo",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "multipart/form-data"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": []
+						}
+					]
+				},
+				"url": {
+					"raw": "{{BASE_URL}}/sr/{{TICKET_ID}}/attachment",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"sr",
+						"{{TICKET_ID}}",
+						"attachment"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Adicionar Atividade",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": \"{{TICKET_ID}}\",\n  \"userId\": 123456,\n  \"fromTime\": 1652904309000,\n  \"toTime\": 1652904309000,\n  \"description\": \"Atividade inserida automaticamente\"\n}"
+				},
+				"url": {
+					"raw": "{{BASE_URL}}/sr/{{TICKET_ID}}/activity",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"sr",
+						"{{TICKET_ID}}",
+						"activity"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Consultar Campos Obrigatórios",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{BASE_URL}}/sr/template?type=incident&template=20&view=1",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"sr",
+						"template"
+					],
+					"query": [
+						{
+							"key": "type",
+							"value": "incident"
+						},
+						{
+							"key": "template",
+							"value": "20"
+						},
+						{
+							"key": "view",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "BASE_URL",
+			"value": "https://servicedesk.openfinancebrasil.org.br/api/v1"
+		},
+		{
+			"key": "USER_NAME",
+			"value": "usuario_api"
+		},
+		{
+			"key": "PASSWORD",
+			"value": "senha_api"
+		},
+		{
+			"key": "GROUP_ID",
+			"value": "10"
+		},
+		{
+			"key": "TICKET_ID",
+			"value": "1273"
+		},
+		{
+			"key": "ticket_id",
+			"value": "",
+			"type": "default"
+		}
+	]
+}

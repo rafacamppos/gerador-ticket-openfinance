@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: gerador-ticket-openfinance-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gerador_ticket_openfinance
+      POSTGRES_USER: gerador_ticket_user
+      POSTGRES_PASSWORD: gerador_ticket_password
+    ports:
+      - "5440:5432"
+    volumes:
+      - gerador_ticket_openfinance_data:/var/lib/postgresql/data
+      - ./sql:/sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gerador_ticket_user -d gerador_ticket_openfinance"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: gerador-ticket-openfinance-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - gerador_ticket_openfinance_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  gerador_ticket_openfinance_data:
+  gerador_ticket_openfinance_redis_data:

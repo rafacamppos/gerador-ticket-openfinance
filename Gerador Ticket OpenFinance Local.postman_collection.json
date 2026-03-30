@@ -1,0 +1,296 @@
+{
+  "info": {
+    "_postman_id": "77483146-8d4d-4cf4-9e07-4c14995d347e",
+    "name": "Gerador Ticket OpenFinance Local",
+    "description": "Collection para validar os endpoints internos do backend local de automacao de tickets Open Finance.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{LOCAL_API_BASE_URL}}/health",
+          "host": [
+            "{{LOCAL_API_BASE_URL}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "List Tickets",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "{{AUTHORIZATION_HEADER}}"
+          }
+        ],
+        "url": {
+          "raw": "{{LOCAL_API_BASE_URL}}/api/v1/open-finance/tickets?assignedGroup={{GROUP_ID}}&problemType=Incidentes_APIs_Erros",
+          "host": [
+            "{{LOCAL_API_BASE_URL}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "open-finance",
+            "tickets"
+          ],
+          "query": [
+            {
+              "key": "assignedGroup",
+              "value": "{{GROUP_ID}}"
+            },
+            {
+              "key": "problemType",
+              "value": "Incidentes_APIs_Erros"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Ticket By Id",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "{{AUTHORIZATION_HEADER}}"
+          }
+        ],
+        "url": {
+          "raw": "{{LOCAL_API_BASE_URL}}/api/v1/open-finance/tickets/{{TICKET_ID}}",
+          "host": [
+            "{{LOCAL_API_BASE_URL}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "open-finance",
+            "tickets",
+            "{{TICKET_ID}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create Ticket",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "{{AUTHORIZATION_HEADER}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"info\": [\n    {\"key\":\"problem_type\",\"value\":\"Incidentes_Diretório_Erro\"},\n    {\"key\":\"title\",\"value\":\"Teste de abertura via backend local\"},\n    {\"key\":\"description\",\"value\":\"Chamado aberto pelo backend Express local\"}\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{LOCAL_API_BASE_URL}}/api/v1/open-finance/tickets?type=1&template={{TEMPLATE_ID}}",
+          "host": [
+            "{{LOCAL_API_BASE_URL}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "open-finance",
+            "tickets"
+          ],
+          "query": [
+            {
+              "key": "type",
+              "value": "1"
+            },
+            {
+              "key": "template",
+              "value": "{{TEMPLATE_ID}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Ticket",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "{{AUTHORIZATION_HEADER}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"info\": [\n    {\"key\": \"status\", \"value\": \"8\"},\n    {\"key\": \"notes\", \"value\": [{\"userName\": \"Analista\", \"createDate\": 1647019229000, \"text\": \"Nota adicionada via backend local\"}]}\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{LOCAL_API_BASE_URL}}/api/v1/open-finance/tickets/{{TICKET_ID}}",
+          "host": [
+            "{{LOCAL_API_BASE_URL}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "open-finance",
+            "tickets",
+            "{{TICKET_ID}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create Ticket Attachment",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "{{AUTHORIZATION_HEADER}}"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": []
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{LOCAL_API_BASE_URL}}/api/v1/open-finance/tickets/{{TICKET_ID}}/attachments",
+          "host": [
+            "{{LOCAL_API_BASE_URL}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "open-finance",
+            "tickets",
+            "{{TICKET_ID}}",
+            "attachments"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create Ticket Activity",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "{{AUTHORIZATION_HEADER}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": 123456,\n  \"fromTime\": 1652904309000,\n  \"toTime\": 1652904309000,\n  \"description\": \"Atividade inserida pelo backend local\"\n}"
+        },
+        "url": {
+          "raw": "{{LOCAL_API_BASE_URL}}/api/v1/open-finance/tickets/{{TICKET_ID}}/activities",
+          "host": [
+            "{{LOCAL_API_BASE_URL}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "open-finance",
+            "tickets",
+            "{{TICKET_ID}}",
+            "activities"
+          ]
+        }
+      }
+    },
+    {
+      "name": "List Required Template Fields",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "{{AUTHORIZATION_HEADER}}"
+          }
+        ],
+        "url": {
+          "raw": "{{LOCAL_API_BASE_URL}}/api/v1/open-finance/ticket-templates/{{TEMPLATE_ID}}/required-fields?type=incident&view=1",
+          "host": [
+            "{{LOCAL_API_BASE_URL}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "open-finance",
+            "ticket-templates",
+            "{{TEMPLATE_ID}}",
+            "required-fields"
+          ],
+          "query": [
+            {
+              "key": "type",
+              "value": "incident"
+            },
+            {
+              "key": "view",
+              "value": "1"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "LOCAL_API_BASE_URL",
+      "value": "http://localhost:3011"
+    },
+    {
+      "key": "AUTHORIZATION_HEADER",
+      "value": "Bearer substitua-pelo-token-ou-cabecalho-valido"
+    },
+    {
+      "key": "OPEN_FINANCE_USER_NAME",
+      "value": "usuario_api"
+    },
+    {
+      "key": "OPEN_FINANCE_PASSWORD",
+      "value": "senha_api"
+    },
+    {
+      "key": "GROUP_ID",
+      "value": "10"
+    },
+    {
+      "key": "TEMPLATE_ID",
+      "value": "20"
+    },
+    {
+      "key": "TICKET_ID",
+      "value": "1273"
+    }
+  ]
+}
