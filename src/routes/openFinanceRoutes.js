@@ -38,6 +38,7 @@ router.put('/environment', openFinanceEnvironmentController.updateEnvironment);
 router.get('/ticket-flows', openFinanceTicketFlowController.listTicketFlows);
 router.get('/ticket-flows/:ticketId', openFinanceTicketFlowController.getTicketFlow);
 router.post('/ticket-flows/:ticketId/transitions', openFinanceTicketFlowController.transitionTicketFlow);
+router.get('/ticket-statuses', openFinanceTicketsController.listTicketStatuses);
 router.get('/tickets/known', openFinanceTicketsController.listKnownTickets);
 router.get('/tickets', openFinanceTicketsController.listTickets);
 router.get('/tickets/:ticketId', openFinanceTicketsController.getTicketById);

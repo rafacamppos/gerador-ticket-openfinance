@@ -46,6 +46,7 @@ test('app registers the expected HTTP routes', () => {
     'GET /api/v1/open-finance/environment',
     'GET /api/v1/open-finance/ticket-flows',
     'GET /api/v1/open-finance/ticket-flows/:ticketId',
+    'GET /api/v1/open-finance/ticket-statuses',
     'GET /api/v1/open-finance/ticket-templates/:templateId/required-fields',
     'GET /api/v1/open-finance/tickets',
     'GET /api/v1/open-finance/tickets/:ticketId',

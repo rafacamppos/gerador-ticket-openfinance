@@ -37,6 +37,19 @@ async function listKnownTickets(req, res, next) {
   }
 }
 
+async function listTicketStatuses(req, res, next) {
+  try {
+    logger.info('Open Finance ticket statuses requested', {
+      requestId: req.requestId || null,
+      route: 'listTicketStatuses',
+    });
+    const response = await openFinanceService.listTicketStatuses();
+    res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+}
+
 async function getTicketById(req, res, next) {
   try {
     logger.info('Open Finance ticket detail requested', {
@@ -191,6 +204,7 @@ module.exports = {
   downloadTicketAttachment,
   getTicketById,
   listKnownTickets,
+  listTicketStatuses,
   listRequiredTemplateFields,
   listTickets,
   updateTicket,

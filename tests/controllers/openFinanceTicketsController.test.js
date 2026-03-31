@@ -434,6 +434,35 @@ test('listKnownTickets forwards service errors to next without writing response'
   }
 });
 
+test('listTicketStatuses returns ticket statuses from service', async () => {
+  const originalListTicketStatuses = service.listTicketStatuses;
+
+  service.listTicketStatuses = async () => [
+    { id: '1', name: 'NOVO' },
+    { id: '8', name: 'EM ATENDIMENTO N2' },
+  ];
+
+  const req = {
+    headers: {},
+    session: {},
+  };
+  const res = createMockResponse();
+
+  try {
+    await controller.listTicketStatuses(req, res, (error) => {
+      throw error;
+    });
+
+    assert.strictEqual(res.statusCode, 200);
+    assert.deepStrictEqual(res.body, [
+      { id: '1', name: 'NOVO' },
+      { id: '8', name: 'EM ATENDIMENTO N2' },
+    ]);
+  } finally {
+    service.listTicketStatuses = originalListTicketStatuses;
+  }
+});
+
 test('getTicketById returns ticket detail from service', async () => {
   const originalGetTicketById = service.getTicketById;
 
