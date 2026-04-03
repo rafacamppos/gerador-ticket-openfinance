@@ -1,4 +1,6 @@
 const openFinanceApplicationIncidentsService = require('../services/openFinanceApplicationIncidentsService');
+const openFinanceIncidentTicketService = require('../services/openFinanceIncidentTicketService');
+const { executeWithManagedSession } = require('./openFinanceControllerShared');
 
 async function listApplicationIncidents(req, res, next) {
   try {
@@ -68,8 +70,26 @@ async function transitionIncident(req, res, next) {
   }
 }
 
+async function createTicketFromIncident(req, res, next) {
+  try {
+    const response = await executeWithManagedSession(req, (headers, context) =>
+      openFinanceIncidentTicketService.createTicketFromIncident(
+        req.params.teamSlug,
+        req.params.incidentId,
+        req.body,
+        headers,
+        context
+      )
+    );
+    res.status(201).json(response);
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   assignIncidentToMe,
+  createTicketFromIncident,
   getApplicationIncidentById,
   listApplicationIncidents,
   reportIncident,

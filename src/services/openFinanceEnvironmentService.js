@@ -4,7 +4,7 @@ const OPEN_FINANCE_ENVIRONMENTS = [
   {
     key: 'production',
     label: 'PRODUCAO',
-    baseUrl: 'https://servicedesk.openfinancebrasil.org.br',
+    baseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
   },
   {
     key: 'homologation',

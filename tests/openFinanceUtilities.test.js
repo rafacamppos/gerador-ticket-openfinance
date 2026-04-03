@@ -16,7 +16,7 @@ const {
 } = require('../src/services/openFinanceTicketQuery');
 const {
   normalizeEndpoint,
-  normalizeErrorPayload,
+  normalizeJsonPayload,
   normalizeHttpMethod,
   normalizeHttpStatusCode,
   normalizeRelatedTicketId,
@@ -125,7 +125,7 @@ test('application incident validation normalizes accepted values and rejects inv
   assert.strictEqual(normalizeRelatedTicketId('12345'), 12345);
   assert.strictEqual(normalizeRelatedTicketId('', { required: false }), null);
   assert.strictEqual(normalizeTimestamp('2026-03-30T12:00:00.000Z'), '2026-03-30T12:00:00.000Z');
-  assert.deepStrictEqual(normalizeErrorPayload([{ code: '500' }]), [{ code: '500' }]);
+  assert.deepStrictEqual(normalizeJsonPayload([{ code: '500' }], 'payload_request'), [{ code: '500' }]);
 
   assert.throws(() => normalizeUuid('invalid', 'field'), /valid UUID/i);
   assert.throws(() => normalizeTeamSlug(''), /teamSlug/i);
@@ -134,7 +134,7 @@ test('application incident validation normalizes accepted values and rejects inv
   assert.throws(() => normalizeHttpStatusCode(99), /between 100 and 599/i);
   assert.throws(() => normalizeRelatedTicketId('', { required: true }), /related_ticket_id/i);
   assert.throws(() => normalizeTimestamp('not-a-date'), /valid timestamp/i);
-  assert.throws(() => normalizeErrorPayload(null), /error_payload/i);
+  assert.throws(() => normalizeJsonPayload(null, 'payload_request'), /payload_request/i);
 });
 
 test('environment service resolves by key label and base url', () => {
@@ -161,9 +161,11 @@ test('incident mapper and contracts expose normalized labels', () => {
       id: 10,
       team_slug: 'consentimentos-inbound',
       team_name: 'Consentimentos Inbound',
-      payload_erro: { detail: 'Erro' },
-      data_hora: '2026-03-30T10:00:00.000Z',
-      status_code_error: 500,
+      payload_request: { consentId: 'urn:abc' },
+      payload_response: { error: 'DETALHE_PGTO_INVALIDO' },
+      occurred_at: '2026-03-30T10:00:00.000Z',
+      http_status_code: 500,
+      description: 'Erro ao criar consentimento',
       incident_status: 'assigned',
       related_ticket_id: 999,
       assigned_to_user_id: 8,
@@ -177,9 +179,11 @@ test('incident mapper and contracts expose normalized labels', () => {
       client_id: null,
       endpoint: null,
       method: null,
-      error_payload: { detail: 'Erro' },
+      payload_request: { consentId: 'urn:abc' },
+      payload_response: { error: 'DETALHE_PGTO_INVALIDO' },
       occurred_at: '2026-03-30T10:00:00.000Z',
       http_status_code: 500,
+      description: 'Erro ao criar consentimento',
       incident_status: 'assigned',
       incident_status_label: 'Atribuido',
       related_ticket_id: '999',

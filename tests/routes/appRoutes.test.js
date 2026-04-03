@@ -54,6 +54,7 @@ test('app registers the expected HTTP routes', () => {
     'GET /api/v1/open-finance/tickets/known',
     'GET /health',
     'POST /api/v1/open-finance/:teamSlug/application-incidents/:incidentId/assign-to-me',
+    'POST /api/v1/open-finance/:teamSlug/application-incidents/:incidentId/create-ticket',
     'POST /api/v1/open-finance/:teamSlug/application-incidents/:incidentId/transitions',
     'POST /api/v1/open-finance/:teamSlug/report-application-error',
     'POST /api/v1/open-finance/auth/login',

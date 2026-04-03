@@ -30,6 +30,10 @@ router.post(
   openFinanceApplicationIncidentsController.transitionIncident
 );
 router.post(
+  '/:teamSlug/application-incidents/:incidentId/create-ticket',
+  openFinanceApplicationIncidentsController.createTicketFromIncident
+);
+router.post(
   '/:teamSlug/report-application-error',
   openFinanceApplicationIncidentsController.reportIncident
 );
