@@ -202,4 +202,5 @@ module.exports = {
   normalizeMillis,
   summarizeDescription,
   toBoolean,
+  tryParseJson,
 };

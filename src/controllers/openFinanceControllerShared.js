@@ -1,4 +1,4 @@
-const openFinanceService = require('../services/openFinanceService');
+const openFinanceAuthService = require('../services/openFinanceAuthService');
 const {
   getDefaultEnvironment,
   listAvailableEnvironments,
@@ -111,7 +111,7 @@ function formatEnvironmentState(req) {
 }
 
 async function createManagedOpenFinanceSession(req, context) {
-  const response = await openFinanceService.createSession({}, context);
+  const response = await openFinanceAuthService.createSession({}, context);
   storeOpenFinanceSession(req, response.sessionState);
   await persistSession(req);
 

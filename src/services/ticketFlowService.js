@@ -60,7 +60,7 @@ async function attachFlowStates(tickets = []) {
   try {
     const repository = getTicketFlowRepository();
     const ids = tickets.map((ticket) => ticket?.ticket?.id).filter(Boolean);
-    const states = await Promise.all(ids.map((ticketId) => repository.getStateByTicketId(ticketId)));
+    const states = await repository.getStatesByTicketIds(ids);
     const stateMap = new Map(
       states.filter(Boolean).map((state) => [String(state.ticket_id), normalizeStateRow(state)])
     );
@@ -122,8 +122,6 @@ async function transitionTicketFlow(ticketId, payload = {}) {
 
 module.exports = {
   attachFlowStates,
-  buildInitialStateSeed,
-  buildTransition,
   getTicketFlow,
   listTicketFlows,
   syncTicketFlows,

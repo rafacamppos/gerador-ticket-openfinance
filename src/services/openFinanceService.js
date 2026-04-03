@@ -1,3 +1,7 @@
+/**
+ * @deprecated Import directly from individual service modules instead.
+ * This aggregator will be removed in a future version.
+ */
 const openFinanceAuthService = require('./openFinanceAuthService');
 const openFinanceApplicationIncidentsService = require('./openFinanceApplicationIncidentsService');
 const openFinanceTicketsService = require('./openFinanceTicketsService');

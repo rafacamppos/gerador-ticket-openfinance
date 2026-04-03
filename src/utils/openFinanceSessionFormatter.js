@@ -1,33 +1,4 @@
-function normalizeKey(value) {
-  return String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '');
-}
-
-function toBoolean(value) {
-  if (typeof value === 'boolean') {
-    return value;
-  }
-
-  if (typeof value === 'string') {
-    const normalized = value.trim().toLowerCase();
-    if (['true', 'sim', 'yes', '1', 'y', 'enabled', 'ativado'].includes(normalized)) {
-      return true;
-    }
-    if (['false', 'nao', 'não', 'no', '0', 'n', 'disabled', 'desativado'].includes(normalized)) {
-      return false;
-    }
-  }
-
-  if (typeof value === 'number') {
-    return value !== 0;
-  }
-
-  return false;
-}
+const { normalizeKey, toBoolean } = require('./openFinanceFormatterShared');
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);

@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 
 const controller = require('../../src/controllers/openFinanceTicketFlowController');
-const service = require('../../src/services/openFinanceService');
+const service = require('../../src/services/ticketFlowService');
 const { createMockResponse } = require('../helpers/testHelpers');
 
 test('listTicketFlows returns the persisted flow states', async () => {

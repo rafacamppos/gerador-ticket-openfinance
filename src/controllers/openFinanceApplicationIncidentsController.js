@@ -1,16 +1,13 @@
-const logger = require('../utils/logger');
-const openFinanceService = require('../services/openFinanceService');
+const openFinanceApplicationIncidentsService = require('../services/openFinanceApplicationIncidentsService');
 
 async function listApplicationIncidents(req, res, next) {
   try {
-    logger.info('Open Finance application incidents requested', {
-      requestId: req.requestId || null,
-      route: 'listApplicationIncidents',
-      teamSlug: req.params.teamSlug,
-      userId: req.session?.portalUser?.id || req.session?.portalUser?.email || null,
-    });
-
-    const response = await openFinanceService.listApplicationIncidents(req.params.teamSlug);
+    const limit = req.query?.limit ? Number(req.query.limit) : null;
+    const offset = req.query?.offset ? Number(req.query.offset) : 0;
+    const response = await openFinanceApplicationIncidentsService.listApplicationIncidents(
+      req.params.teamSlug,
+      { limit, offset }
+    );
     res.status(200).json(response);
   } catch (error) {
     next(error);
@@ -19,15 +16,7 @@ async function listApplicationIncidents(req, res, next) {
 
 async function getApplicationIncidentById(req, res, next) {
   try {
-    logger.info('Open Finance application incident detail requested', {
-      requestId: req.requestId || null,
-      route: 'getApplicationIncidentById',
-      teamSlug: req.params.teamSlug,
-      incidentId: req.params.incidentId,
-      userId: req.session?.portalUser?.id || req.session?.portalUser?.email || null,
-    });
-
-    const response = await openFinanceService.getApplicationIncidentById(
+    const response = await openFinanceApplicationIncidentsService.getApplicationIncidentById(
       req.params.teamSlug,
       req.params.incidentId
     );
@@ -39,18 +28,7 @@ async function getApplicationIncidentById(req, res, next) {
 
 async function reportIncident(req, res, next) {
   try {
-    logger.info('Open Finance application incident reported', {
-      requestId: req.requestId || null,
-      route: 'reportIncident',
-      teamSlug: req.params.teamSlug,
-      userId: req.session?.portalUser?.id || req.session?.portalUser?.email || null,
-      clientId: req.body?.client_id ?? null,
-      endpoint: req.body?.endpoint ?? null,
-      method: req.body?.method ?? null,
-      httpStatusCode: req.body?.http_status_code ?? null,
-    });
-
-    const response = await openFinanceService.reportApplicationIncident(req.params.teamSlug, req.body);
+    const response = await openFinanceApplicationIncidentsService.reportApplicationIncident(req.params.teamSlug, req.body);
 
     res.status(201).json(response);
   } catch (error) {
@@ -62,21 +40,11 @@ async function assignIncidentToMe(req, res, next) {
   try {
     const portalUser = req.session?.portalUser || null;
 
-    logger.info('Open Finance application incident assigned to current user', {
-      requestId: req.requestId || null,
-      route: 'assignIncidentToMe',
-      teamSlug: req.params.teamSlug,
-      incidentId: req.params.incidentId,
-      userId: portalUser?.id || portalUser?.email || null,
-    });
-
-    const response = await openFinanceService.assignApplicationIncidentToUser(
+    const response = await openFinanceApplicationIncidentsService.assignApplicationIncidentToUser(
       req.params.teamSlug,
       req.params.incidentId,
       {
         assigned_to_user_id: portalUser?.id || null,
-        assigned_to_name: portalUser?.name || null,
-        assigned_to_email: portalUser?.email || null,
       }
     );
 
@@ -88,19 +56,7 @@ async function assignIncidentToMe(req, res, next) {
 
 async function transitionIncident(req, res, next) {
   try {
-    const portalUser = req.session?.portalUser || null;
-
-    logger.info('Open Finance application incident transitioned', {
-      requestId: req.requestId || null,
-      route: 'transitionIncident',
-      teamSlug: req.params.teamSlug,
-      incidentId: req.params.incidentId,
-      incidentStatus: req.body?.incident_status ?? null,
-      relatedTicketId: req.body?.related_ticket_id ?? null,
-      userId: portalUser?.id || portalUser?.email || null,
-    });
-
-    const response = await openFinanceService.transitionApplicationIncident(
+    const response = await openFinanceApplicationIncidentsService.transitionApplicationIncident(
       req.params.teamSlug,
       req.params.incidentId,
       req.body

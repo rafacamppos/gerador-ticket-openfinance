@@ -155,3 +155,129 @@ test('classifyTicketWithRules falls back to default SU owner when no fallback ow
     matched_rule_group: null,
   });
 });
+
+test('classifyTicketWithRules handles regex operator', () => {
+  const owners = [
+    { id: 1, slug: 'consentimentos', name: 'Consentimentos', is_fallback_owner: false },
+    { id: 2, slug: 'su-super-usuarios', name: 'SU', is_fallback_owner: true },
+  ];
+  const rules = [
+    {
+      ticket_owner_id: 1,
+      rule_group_code: 'regex-group',
+      logical_operator: 'AND',
+      field_code: 'endpoint',
+      operator: 'regex',
+      expected_value: '^https?://.*\\.santander\\.com\\.br',
+      priority_order: 1,
+    },
+  ];
+
+  const classified = classifyTicketWithRules(
+    { api_context: { endpoint: 'https://api.santander.com.br/consents' } },
+    owners,
+    rules
+  );
+
+  assert.strictEqual(classified.routing.owner_slug, 'consentimentos');
+  assert.strictEqual(classified.routing.resolution_type, 'automatic');
+});
+
+test('classifyTicketWithRules handles invalid regex gracefully', () => {
+  const owners = [
+    { id: 1, slug: 'owner', name: 'Owner', is_fallback_owner: false },
+    { id: 2, slug: 'su', name: 'SU', is_fallback_owner: true },
+  ];
+  const rules = [
+    {
+      ticket_owner_id: 1,
+      rule_group_code: 'bad-regex-group',
+      logical_operator: 'AND',
+      field_code: 'endpoint',
+      operator: 'regex',
+      expected_value: '[invalid regex',
+      priority_order: 1,
+    },
+  ];
+
+  const classified = classifyTicketWithRules(
+    { api_context: { endpoint: 'https://example.com' } },
+    owners,
+    rules
+  );
+
+  assert.strictEqual(classified.routing.resolution_type, 'fallback_su');
+});
+
+test('classifyTicketWithRules returns rule_conflict when two groups match', () => {
+  const owners = [
+    { id: 1, slug: 'owner-a', name: 'Owner A', is_fallback_owner: false },
+    { id: 2, slug: 'owner-b', name: 'Owner B', is_fallback_owner: false },
+    { id: 3, slug: 'su', name: 'SU', is_fallback_owner: true },
+  ];
+  const rules = [
+    {
+      ticket_owner_id: 1,
+      rule_group_code: 'group-a',
+      logical_operator: 'AND',
+      field_code: 'status',
+      operator: 'equals',
+      expected_value: 'NOVO',
+      priority_order: 1,
+    },
+    {
+      ticket_owner_id: 2,
+      rule_group_code: 'group-b',
+      logical_operator: 'AND',
+      field_code: 'status',
+      operator: 'equals',
+      expected_value: 'NOVO',
+      priority_order: 2,
+    },
+  ];
+
+  const classified = classifyTicketWithRules(
+    { ticket: { status: 'NOVO' } },
+    owners,
+    rules
+  );
+
+  assert.strictEqual(classified.routing.resolution_type, 'rule_conflict');
+  assert.strictEqual(classified.routing.owner_slug, 'su');
+});
+
+test('classifyTicketWithRules OR operator matches if any condition is true', () => {
+  const owners = [
+    { id: 1, slug: 'owner', name: 'Owner', is_fallback_owner: false },
+    { id: 2, slug: 'su', name: 'SU', is_fallback_owner: true },
+  ];
+  const rules = [
+    {
+      ticket_owner_id: 1,
+      rule_group_code: 'or-group',
+      logical_operator: 'OR',
+      field_code: 'status',
+      operator: 'equals',
+      expected_value: 'NOVO',
+      priority_order: 1,
+    },
+    {
+      ticket_owner_id: 1,
+      rule_group_code: 'or-group',
+      logical_operator: 'OR',
+      field_code: 'status',
+      operator: 'equals',
+      expected_value: 'CANCELADO',
+      priority_order: 1,
+    },
+  ];
+
+  const classified = classifyTicketWithRules(
+    { ticket: { status: 'NOVO' } },
+    owners,
+    rules
+  );
+
+  assert.strictEqual(classified.routing.owner_slug, 'owner');
+  assert.strictEqual(classified.routing.resolution_type, 'automatic');
+});

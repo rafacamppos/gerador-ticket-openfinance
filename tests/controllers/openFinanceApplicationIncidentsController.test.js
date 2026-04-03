@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 
 const controller = require('../../src/controllers/openFinanceApplicationIncidentsController');
-const service = require('../../src/services/openFinanceService');
+const service = require('../../src/services/openFinanceApplicationIncidentsService');
 
 function createMockResponse() {
   return {
@@ -22,7 +22,7 @@ function createMockResponse() {
 test('listApplicationIncidents returns incidents for the requested team', async () => {
   const originalListApplicationIncidents = service.listApplicationIncidents;
 
-  service.listApplicationIncidents = async (teamSlug) => [
+  service.listApplicationIncidents = async (teamSlug, _pagination) => [
     {
       id: '10',
       team_slug: teamSlug,
@@ -264,8 +264,6 @@ test('assignIncidentToMe injects the authenticated user into service payload', a
       id: incidentId,
       team_slug: teamSlug,
       assigned_to_user_id: payload.assigned_to_user_id,
-      assigned_to_name: payload.assigned_to_name,
-      assigned_to_email: payload.assigned_to_email,
     };
   };
 
@@ -295,23 +293,19 @@ test('assignIncidentToMe injects the authenticated user into service payload', a
       incidentId: '33',
       payload: {
         assigned_to_user_id: '10',
-        assigned_to_name: 'Rafael de Campos',
-        assigned_to_email: 'rafael.campos@f1rst.com.br',
       },
     });
     assert.deepStrictEqual(res.body, {
       id: '33',
       team_slug: 'consentimentos-inbound',
       assigned_to_user_id: '10',
-      assigned_to_name: 'Rafael de Campos',
-      assigned_to_email: 'rafael.campos@f1rst.com.br',
     });
   } finally {
     service.assignApplicationIncidentToUser = originalAssignApplicationIncidentToUser;
   }
 });
 
-test('assignIncidentToMe forwards null user fields when session is absent', async () => {
+test('assignIncidentToMe forwards null user id when session is absent', async () => {
   const originalAssignApplicationIncidentToUser = service.assignApplicationIncidentToUser;
   let captured = null;
 
@@ -321,8 +315,6 @@ test('assignIncidentToMe forwards null user fields when session is absent', asyn
       id: incidentId,
       team_slug: teamSlug,
       assigned_to_user_id: payload.assigned_to_user_id,
-      assigned_to_name: payload.assigned_to_name,
-      assigned_to_email: payload.assigned_to_email,
     };
   };
 
@@ -346,23 +338,19 @@ test('assignIncidentToMe forwards null user fields when session is absent', asyn
       incidentId: '33',
       payload: {
         assigned_to_user_id: null,
-        assigned_to_name: null,
-        assigned_to_email: null,
       },
     });
     assert.deepStrictEqual(res.body, {
       id: '33',
       team_slug: 'consentimentos-inbound',
       assigned_to_user_id: null,
-      assigned_to_name: null,
-      assigned_to_email: null,
     });
   } finally {
     service.assignApplicationIncidentToUser = originalAssignApplicationIncidentToUser;
   }
 });
 
-test('assignIncidentToMe forwards incomplete portal user fields as null when absent', async () => {
+test('assignIncidentToMe forwards only user id in payload', async () => {
   const originalAssignApplicationIncidentToUser = service.assignApplicationIncidentToUser;
   let captured = null;
 
@@ -395,14 +383,10 @@ test('assignIncidentToMe forwards incomplete portal user fields as null when abs
       incidentId: '33',
       payload: {
         assigned_to_user_id: '10',
-        assigned_to_name: null,
-        assigned_to_email: null,
       },
     });
     assert.deepStrictEqual(res.body, {
       assigned_to_user_id: '10',
-      assigned_to_name: null,
-      assigned_to_email: null,
     });
   } finally {
     service.assignApplicationIncidentToUser = originalAssignApplicationIncidentToUser;

@@ -36,12 +36,26 @@ function normalizeTeamSlug(value) {
   return normalizedValue;
 }
 
-function normalizeErrorPayload(value) {
+function normalizeJsonPayload(value, fieldName) {
   if (!value || typeof value !== 'object') {
-    throw buildError('Field "error_payload" must be a valid JSON object or array.');
+    throw buildError(`Field "${fieldName}" must be a valid JSON object or array.`);
   }
 
   return value;
+}
+
+function normalizeDescription(value) {
+  const normalizedValue = String(value || '').trim();
+
+  if (!normalizedValue) {
+    throw buildError('Field "description" is required.');
+  }
+
+  if (normalizedValue.length > 1024) {
+    throw buildError('Field "description" must be at most 1024 characters.');
+  }
+
+  return normalizedValue;
 }
 
 function normalizeEndpoint(value) {
@@ -115,10 +129,11 @@ function normalizeRelatedTicketId(value, { required = false } = {}) {
 }
 
 module.exports = {
+  normalizeDescription,
   normalizeEndpoint,
-  normalizeErrorPayload,
   normalizeHttpMethod,
   normalizeHttpStatusCode,
+  normalizeJsonPayload,
   normalizeRelatedTicketId,
   normalizeTeamSlug,
   normalizeTimestamp,

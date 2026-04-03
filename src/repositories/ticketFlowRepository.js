@@ -19,13 +19,29 @@ async function upsertInitialStates(states = []) {
   return result.rows;
 }
 
+const STATE_SELECT = `
+  SELECT
+    tfs.*,
+    towner.name AS current_owner_name,
+    aowner.name AS assigned_owner_name,
+    evt.actor_name AS last_actor_name,
+    evt.actor_email AS last_actor_email,
+    evt.action AS last_action
+  FROM ticket_flow_states tfs
+  LEFT JOIN ticket_owners towner ON towner.slug = tfs.current_owner_slug
+  LEFT JOIN ticket_owners aowner ON aowner.slug = tfs.assigned_owner_slug
+  LEFT JOIN LATERAL (
+    SELECT actor_name, actor_email, action
+    FROM ticket_flow_events
+    WHERE ticket_id = tfs.ticket_id
+    ORDER BY created_at DESC
+    LIMIT 1
+  ) evt ON TRUE
+`;
+
 async function getStateByTicketId(ticketId) {
   const result = await getPool().query(
-    `
-      SELECT *
-      FROM ticket_flow_states
-      WHERE ticket_id = $1
-    `,
+    `${STATE_SELECT} WHERE tfs.ticket_id = $1`,
     [Number(ticketId)]
   );
 
@@ -42,11 +58,7 @@ async function getStatesByTicketIds(ticketIds = []) {
   }
 
   const result = await getPool().query(
-    `
-      SELECT *
-      FROM ticket_flow_states
-      WHERE ticket_id = ANY($1::bigint[])
-    `,
+    `${STATE_SELECT} WHERE tfs.ticket_id = ANY($1::bigint[])`,
     [normalizedIds]
   );
 

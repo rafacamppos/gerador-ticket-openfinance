@@ -6,6 +6,7 @@ const {
   databaseUser,
   databasePassword,
 } = require('../config/env');
+const logger = require('../utils/logger');
 
 let pool;
 
@@ -19,6 +20,10 @@ function getPool() {
       password: databasePassword,
       max: 5,
       idleTimeoutMillis: 30000,
+    });
+
+    pool.on('error', (error) => {
+      logger.error('PostgreSQL pool error', { errorMessage: error.message });
     });
   }
 

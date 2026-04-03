@@ -8,6 +8,12 @@ const DEFAULT_FALLBACK_OWNER = {
   name: 'SU (Super Usuário)',
 };
 
+const CACHE_TTL_MS = 5 * 60 * 1000;
+let ownersCache = null;
+let rulesCache = null;
+let ownersCacheExpiresAt = 0;
+let rulesCacheExpiresAt = 0;
+
 function getTicketOwnerRepository() {
   // Lazy-load the repository so tests and local runs can still work
   // even when the PostgreSQL driver is not installed.
@@ -44,7 +50,20 @@ function buildRoutingContext(ticket = {}) {
   };
 }
 
-function evaluateRule(fieldValue, operator, expectedValue) {
+function precompileRules(rules) {
+  return rules.map((rule) => {
+    if (rule.operator !== 'regex') {
+      return rule;
+    }
+    try {
+      return { ...rule, _compiledRegex: new RegExp(rule.expected_value, 'i') };
+    } catch {
+      return { ...rule, _compiledRegex: null };
+    }
+  });
+}
+
+function evaluateRule(fieldValue, operator, expectedValue, compiledRegex = null) {
   const normalizedFieldValue = normalizeComparableValue(fieldValue);
   const normalizedExpectedValue = normalizeComparableValue(expectedValue);
 
@@ -67,7 +86,8 @@ function evaluateRule(fieldValue, operator, expectedValue) {
         .includes(normalizedFieldValue);
     case 'regex':
       try {
-        return new RegExp(expectedValue, 'i').test(String(fieldValue || ''));
+        const re = compiledRegex || new RegExp(expectedValue, 'i');
+        return re.test(String(fieldValue || ''));
       } catch {
         return false;
       }
@@ -125,7 +145,7 @@ function classifyTicketWithRules(ticket, owners, rules) {
 
   for (const group of groups.values()) {
     const evaluations = group.items.map((rule) =>
-      evaluateRule(routingContext[rule.field_code], rule.operator, rule.expected_value)
+      evaluateRule(routingContext[rule.field_code], rule.operator, rule.expected_value, rule._compiledRegex || null)
     );
 
     const matched =
@@ -151,6 +171,29 @@ function classifyTicketWithRules(ticket, owners, rules) {
   return applyRouting(ticket, fallbackOwner, 'fallback_su');
 }
 
+async function getCachedOwners(repository) {
+  if (!ownersCache || Date.now() > ownersCacheExpiresAt) {
+    ownersCache = await repository.listActiveOwners();
+    ownersCacheExpiresAt = Date.now() + CACHE_TTL_MS;
+  }
+  return ownersCache;
+}
+
+async function getCachedRules(repository) {
+  if (!rulesCache || Date.now() > rulesCacheExpiresAt) {
+    rulesCache = await repository.listActiveRules();
+    rulesCacheExpiresAt = Date.now() + CACHE_TTL_MS;
+  }
+  return rulesCache;
+}
+
+function clearClassificationCache() {
+  ownersCache = null;
+  rulesCache = null;
+  ownersCacheExpiresAt = 0;
+  rulesCacheExpiresAt = 0;
+}
+
 async function classifyTickets(tickets) {
   if (!ticketOwnerClassificationEnabled || !Array.isArray(tickets) || !tickets.length) {
     return tickets;
@@ -158,10 +201,11 @@ async function classifyTickets(tickets) {
 
   try {
     const ticketOwnerRepository = getTicketOwnerRepository();
-    const [owners, rules] = await Promise.all([
-      ticketOwnerRepository.listActiveOwners(),
-      ticketOwnerRepository.listActiveRules(),
+    const [owners, rawRules] = await Promise.all([
+      getCachedOwners(ticketOwnerRepository),
+      getCachedRules(ticketOwnerRepository),
     ]);
+    const rules = precompileRules(rawRules);
 
     return tickets.map((ticket) => classifyTicketWithRules(ticket, owners, rules));
   } catch (error) {
@@ -184,4 +228,5 @@ module.exports = {
   classifyTicketWithRules,
   classifyTicket,
   classifyTickets,
+  clearClassificationCache,
 };

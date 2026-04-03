@@ -4,10 +4,11 @@ const ticketOwnerRepository = require('../repositories/ticketOwnerRepository');
 const applicationIncidentRepository = require('../repositories/applicationIncidentRepository');
 const { normalizeIncidentRow } = require('./applicationIncidentMapper');
 const {
+  normalizeDescription,
   normalizeEndpoint,
-  normalizeErrorPayload,
   normalizeHttpMethod,
   normalizeHttpStatusCode,
+  normalizeJsonPayload,
   normalizeRelatedTicketId,
   normalizeTeamSlug,
   normalizeTimestamp,
@@ -39,9 +40,11 @@ async function reportApplicationIncident(teamSlug, payload = {}) {
     ),
     endpoint: normalizeEndpoint(payload.endpoint),
     method: normalizeHttpMethod(payload.method),
-    error_payload: normalizeErrorPayload(payload.error_payload),
+    payload_request: normalizeJsonPayload(payload.payload_request, 'payload_request'),
+    payload_response: normalizeJsonPayload(payload.payload_response, 'payload_response'),
     occurred_at: normalizeTimestamp(payload.occurred_at),
     http_status_code: normalizeHttpStatusCode(payload.http_status_code),
+    description: normalizeDescription(payload.description),
   };
 
   const createdIncident = await applicationIncidentRepository.createIncident(normalizedPayload);
@@ -52,9 +55,12 @@ async function reportApplicationIncident(teamSlug, payload = {}) {
   });
 }
 
-async function listApplicationIncidents(teamSlug) {
+async function listApplicationIncidents(teamSlug, { limit, offset } = {}) {
   const normalizedTeamSlug = normalizeTeamSlug(teamSlug);
-  const incidents = await applicationIncidentRepository.listIncidentsByOwnerSlug(normalizedTeamSlug);
+  const incidents = await applicationIncidentRepository.listIncidentsByOwnerSlug(
+    normalizedTeamSlug,
+    { limit, offset }
+  );
   return incidents.map(normalizeIncidentRow);
 }
 
@@ -86,7 +92,7 @@ async function assignApplicationIncidentToUser(teamSlug, incidentId, payload = {
     throw buildError('Path param "incidentId" is required.');
   }
 
-  if (!payload.assigned_to_name || !payload.assigned_to_email) {
+  if (!payload.assigned_to_user_id) {
     throw buildError('Usuário autenticado não encontrado.', 401);
   }
 
@@ -95,9 +101,7 @@ async function assignApplicationIncidentToUser(teamSlug, incidentId, payload = {
     normalizedIncidentId,
     {
       incident_status: INCIDENT_STATUS.ASSIGNED,
-      assigned_to_user_id: payload.assigned_to_user_id || null,
-      assigned_to_name: payload.assigned_to_name,
-      assigned_to_email: payload.assigned_to_email,
+      assigned_to_user_id: payload.assigned_to_user_id,
     }
   );
 
@@ -161,7 +165,6 @@ module.exports = {
   assignApplicationIncidentToUser,
   getApplicationIncidentById,
   listApplicationIncidents,
-  normalizeIncidentRow,
   reportApplicationIncident,
   transitionApplicationIncident,
 };

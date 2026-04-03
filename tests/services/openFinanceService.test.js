@@ -532,7 +532,23 @@ test('createSession rejects missing configured credentials when payload is empty
 
 test('listTickets normalizes filter query names', async () => {
   const originalGetJson = client.getJson;
+  const originalClassifyTickets = ticketOwnerClassificationService.classifyTickets;
+  const originalSyncTicketFlows = ticketFlowService.syncTicketFlows;
+  const originalAttachFlowStates = ticketFlowService.attachFlowStates;
   let captured = null;
+
+  ticketOwnerClassificationService.classifyTickets = async (tickets) =>
+    tickets.map((ticket) => ({
+      ...ticket,
+      routing: {
+        owner_slug: 'su-super-usuarios',
+        owner_name: 'SU (Super Usuário)',
+        resolution_type: 'classification_unavailable',
+        matched_rule_group: null,
+      },
+    }));
+  ticketFlowService.syncTicketFlows = async () => [];
+  ticketFlowService.attachFlowStates = async (tickets) => tickets.map((t) => ({ ...t, flow: null }));
 
   client.getJson = async (path, query, headers) => {
     captured = { path, query, headers };
@@ -726,6 +742,7 @@ test('listTickets normalizes filter query names', async () => {
           resolution_type: 'classification_unavailable',
           matched_rule_group: null,
         },
+        flow: null,
       },
     ]);
     assert.deepStrictEqual(captured, {
@@ -740,6 +757,9 @@ test('listTickets normalizes filter query names', async () => {
     });
   } finally {
     client.getJson = originalGetJson;
+    ticketOwnerClassificationService.classifyTickets = originalClassifyTickets;
+    ticketFlowService.syncTicketFlows = originalSyncTicketFlows;
+    ticketFlowService.attachFlowStates = originalAttachFlowStates;
   }
 });
 
@@ -1081,7 +1101,22 @@ test('listKnownTickets maps ownerSlug query to local flow lookup', async () => {
 
 test('getTicketById formats the upstream payload into the public ticket contract', async () => {
   const originalGetJson = client.getJson;
+  const originalClassifyTicket = ticketOwnerClassificationService.classifyTicket;
+  const originalSyncTicketFlows = ticketFlowService.syncTicketFlows;
+  const originalAttachFlowStates = ticketFlowService.attachFlowStates;
   let captured = null;
+
+  ticketOwnerClassificationService.classifyTicket = async (ticket) => ({
+    ...ticket,
+    routing: {
+      owner_slug: 'su-super-usuarios',
+      owner_name: 'SU (Super Usuário)',
+      resolution_type: 'classification_unavailable',
+      matched_rule_group: null,
+    },
+  });
+  ticketFlowService.syncTicketFlows = async () => [];
+  ticketFlowService.attachFlowStates = async (tickets) => tickets.map((t) => ({ ...t, flow: null }));
 
   client.getJson = async (path, query, headers) => {
     captured = { path, query, headers };
@@ -1277,9 +1312,13 @@ test('getTicketById formats the upstream payload into the public ticket contract
         resolution_type: 'classification_unavailable',
         matched_rule_group: null,
       },
+      flow: null,
     });
   } finally {
     client.getJson = originalGetJson;
+    ticketOwnerClassificationService.classifyTicket = originalClassifyTicket;
+    ticketFlowService.syncTicketFlows = originalSyncTicketFlows;
+    ticketFlowService.attachFlowStates = originalAttachFlowStates;
   }
 });
 

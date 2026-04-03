@@ -2,8 +2,19 @@ const test = require('node:test');
 const assert = require('node:assert');
 
 const controller = require('../../src/controllers/openFinanceAuthController');
-const service = require('../../src/services/openFinanceService');
+const openFinanceAuthService = require('../../src/services/openFinanceAuthService');
+const portalAuthService = require('../../src/services/portalAuthService');
 const { createMockResponse } = require('../helpers/testHelpers');
+
+// Provide a unified service object so existing test code can reference service.xxx
+const service = {
+  get createSession() { return openFinanceAuthService.createSession; },
+  set createSession(fn) { openFinanceAuthService.createSession = fn; },
+  get loginPortalUser() { return portalAuthService.loginPortalUser; },
+  set loginPortalUser(fn) { portalAuthService.loginPortalUser = fn; },
+  get getPortalSessionUser() { return portalAuthService.getPortalSessionUser; },
+  set getPortalSessionUser(fn) { portalAuthService.getPortalSessionUser = fn; },
+};
 
 test('createSession stores upstream cookie and cache in express session', async () => {
   const originalCreateSession = service.createSession;

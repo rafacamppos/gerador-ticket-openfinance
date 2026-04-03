@@ -28,7 +28,7 @@ echo "Aplicando scripts SQL..."
 for sql_file in $(find "${SQL_DIR}" -maxdepth 1 -type f -name '*.sql' | sort); do
   echo " - $(basename "${sql_file}")"
   docker exec -i "${CONTAINER_NAME}" \
-    psql -v ON_ERROR_STOP=1 -U "${DB_USER}" -d "${DB_NAME}" -f "/sql/$(basename "${sql_file}")"
+    psql -v ON_ERROR_STOP=1 -U "${DB_USER}" -d "${DB_NAME}" < "${sql_file}"
 done
 
 echo

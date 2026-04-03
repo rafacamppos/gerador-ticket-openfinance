@@ -1,8 +1,8 @@
-const openFinanceService = require('../services/openFinanceService');
+const ticketFlowService = require('../services/ticketFlowService');
 
 async function listTicketFlows(req, res, next) {
   try {
-    const response = await openFinanceService.listTicketFlows(req.query);
+    const response = await ticketFlowService.listTicketFlows(req.query);
     res.status(200).json(response);
   } catch (error) {
     next(error);
@@ -11,7 +11,7 @@ async function listTicketFlows(req, res, next) {
 
 async function getTicketFlow(req, res, next) {
   try {
-    const response = await openFinanceService.getTicketFlow(req.params.ticketId);
+    const response = await ticketFlowService.getTicketFlow(req.params.ticketId);
     res.status(200).json(response);
   } catch (error) {
     next(error);
@@ -21,7 +21,7 @@ async function getTicketFlow(req, res, next) {
 async function transitionTicketFlow(req, res, next) {
   try {
     const sessionUser = req.session?.portalUser || null;
-    const response = await openFinanceService.transitionTicketFlow(
+    const response = await ticketFlowService.transitionTicketFlow(
       req.params.ticketId,
       {
         ...req.body,

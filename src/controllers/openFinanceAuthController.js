@@ -1,4 +1,5 @@
-const openFinanceService = require('../services/openFinanceService');
+const openFinanceAuthService = require('../services/openFinanceAuthService');
+const portalAuthService = require('../services/portalAuthService');
 const logger = require('../utils/logger');
 const {
   getRequestContext,
@@ -7,12 +8,7 @@ const {
 
 async function createSession(req, res, next) {
   try {
-    logger.info('Open Finance session creation requested', {
-      requestId: req.requestId || null,
-      route: 'createSession',
-      userName: req.body?.userName || req.body?.user_name || null,
-    });
-    const response = await openFinanceService.createSession(req.body, getRequestContext(req));
+    const response = await openFinanceAuthService.createSession(req.body, getRequestContext(req));
     req.session.openFinanceSession = response.sessionState;
     await persistSession(req);
     logger.info('Open Finance session stored', {
@@ -29,7 +25,7 @@ async function createSession(req, res, next) {
 
 async function loginPortalUser(req, res, next) {
   try {
-    const user = await openFinanceService.loginPortalUser(req.body);
+    const user = await portalAuthService.loginPortalUser(req.body);
     req.session.portalUser = user;
     await persistSession(req);
     res.status(200).json(user);
@@ -40,7 +36,7 @@ async function loginPortalUser(req, res, next) {
 
 async function getPortalSessionUser(req, res, next) {
   try {
-    const user = openFinanceService.getPortalSessionUser(req.session);
+    const user = portalAuthService.getPortalSessionUser(req.session);
 
     if (!user) {
       res.status(401).json({

@@ -148,5 +148,4 @@ module.exports = {
   createTicketAttachment,
   createTicketActivity,
   downloadTicketAttachment,
-  resolveTicketListOwner,
 };

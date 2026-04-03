@@ -2,8 +2,37 @@ const test = require('node:test');
 const assert = require('node:assert');
 
 const controller = require('../../src/controllers/openFinanceTicketsController');
-const service = require('../../src/services/openFinanceService');
+const openFinanceTicketsService = require('../../src/services/openFinanceTicketsService');
+const openFinanceTemplatesService = require('../../src/services/openFinanceTemplatesService');
+const ticketStatusService = require('../../src/services/ticketStatusService');
+const openFinanceAuthService = require('../../src/services/openFinanceAuthService');
 const { createMockResponse } = require('../helpers/testHelpers');
+
+// Proxy so existing test code can use service.xxx to mock individual services
+const service = {
+  get listTickets() { return openFinanceTicketsService.listTickets; },
+  set listTickets(fn) { openFinanceTicketsService.listTickets = fn; },
+  get listKnownTickets() { return openFinanceTicketsService.listKnownTickets; },
+  set listKnownTickets(fn) { openFinanceTicketsService.listKnownTickets = fn; },
+  get listTicketStatuses() { return ticketStatusService.listTicketStatuses; },
+  set listTicketStatuses(fn) { ticketStatusService.listTicketStatuses = fn; },
+  get getTicketById() { return openFinanceTicketsService.getTicketById; },
+  set getTicketById(fn) { openFinanceTicketsService.getTicketById = fn; },
+  get createTicket() { return openFinanceTicketsService.createTicket; },
+  set createTicket(fn) { openFinanceTicketsService.createTicket = fn; },
+  get updateTicket() { return openFinanceTicketsService.updateTicket; },
+  set updateTicket(fn) { openFinanceTicketsService.updateTicket = fn; },
+  get createTicketAttachment() { return openFinanceTicketsService.createTicketAttachment; },
+  set createTicketAttachment(fn) { openFinanceTicketsService.createTicketAttachment = fn; },
+  get createTicketActivity() { return openFinanceTicketsService.createTicketActivity; },
+  set createTicketActivity(fn) { openFinanceTicketsService.createTicketActivity = fn; },
+  get downloadTicketAttachment() { return openFinanceTicketsService.downloadTicketAttachment; },
+  set downloadTicketAttachment(fn) { openFinanceTicketsService.downloadTicketAttachment = fn; },
+  get listRequiredTemplateFields() { return openFinanceTemplatesService.listRequiredTemplateFields; },
+  set listRequiredTemplateFields(fn) { openFinanceTemplatesService.listRequiredTemplateFields = fn; },
+  get createSession() { return openFinanceAuthService.createSession; },
+  set createSession(fn) { openFinanceAuthService.createSession = fn; },
+};
 
 test('listTickets reuses cookie and cache from session when headers are absent', async () => {
   const originalListTickets = service.listTickets;

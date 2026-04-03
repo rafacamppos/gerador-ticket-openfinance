@@ -1,4 +1,5 @@
 const { redisUrl } = require('../config/env');
+const logger = require('../utils/logger');
 
 let redisClient;
 
@@ -13,8 +14,8 @@ function getRedisClient() {
       },
     });
 
-    redisClient.on('error', () => {
-      // Session middleware handles request-level failures.
+    redisClient.on('error', (error) => {
+      logger.error('Redis client error', { errorMessage: error.message });
     });
   }
 

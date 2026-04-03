@@ -10,54 +10,16 @@ CREATE TABLE IF NOT EXISTS catalog_versions (
   CONSTRAINT uq_catalog_versions UNIQUE (source_name, version_label)
 );
 
-CREATE TABLE IF NOT EXISTS categories (
-  id BIGSERIAL PRIMARY KEY,
-  record_type VARCHAR(80) NOT NULL,
-  level_1 VARCHAR(255) NOT NULL,
-  level_2 VARCHAR(255) NOT NULL,
-  level_3 VARCHAR(255) NOT NULL,
-  is_active BOOLEAN NOT NULL DEFAULT TRUE,
-  catalog_version_id BIGINT REFERENCES catalog_versions(id),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT uq_categories UNIQUE (record_type, level_1, level_2, level_3)
-);
-
-CREATE TABLE IF NOT EXISTS templates (
-  id BIGSERIAL PRIMARY KEY,
-  template_code VARCHAR(100) NOT NULL,
-  template_name VARCHAR(255) NOT NULL,
-  service_desk_template_id BIGINT NOT NULL,
-  ticket_kind SMALLINT NOT NULL,
-  is_active BOOLEAN NOT NULL DEFAULT TRUE,
-  catalog_version_id BIGINT REFERENCES catalog_versions(id),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT uq_templates_code UNIQUE (template_code),
-  CONSTRAINT uq_templates_service_desk UNIQUE (service_desk_template_id)
-);
 
 CREATE TABLE IF NOT EXISTS category_templates (
-  id BIGSERIAL PRIMARY KEY,
-  category_id BIGINT NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
-  template_id BIGINT NOT NULL REFERENCES templates(id) ON DELETE CASCADE,
-  external_category_id BIGINT,
-  priority_order INTEGER NOT NULL DEFAULT 1,
-  is_default BOOLEAN NOT NULL DEFAULT FALSE,
-  catalog_version_id BIGINT REFERENCES catalog_versions(id),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT uq_category_templates UNIQUE (category_id, template_id)
+  id BIGINT PRIMARY KEY,
+  category_name VARCHAR(255) NOT NULL,
+  sub_category_name VARCHAR(255) NOT NULL,
+  third_level_category_name VARCHAR(255) NOT NULL,
+  template_id BIGINT NOT NULL,
+  type INTEGER NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS field_data_types (
-  id BIGSERIAL PRIMARY KEY,
-  type_code VARCHAR(60) NOT NULL,
-  description VARCHAR(255) NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT uq_field_data_types UNIQUE (type_code)
-);
 
 CREATE TABLE IF NOT EXISTS field_definitions (
   id BIGSERIAL PRIMARY KEY,
@@ -89,7 +51,7 @@ CREATE TABLE IF NOT EXISTS field_type_mappings (
   id BIGSERIAL PRIMARY KEY,
   field_definition_id BIGINT NOT NULL REFERENCES field_definitions(id) ON DELETE CASCADE,
   api_key VARCHAR(120) NOT NULL,
-  data_type_id BIGINT NOT NULL REFERENCES field_data_types(id),
+  data_type_id BIGINT NOT NULL,
   is_required BOOLEAN NOT NULL DEFAULT FALSE,
   raw_type_label VARCHAR(120) NOT NULL,
   catalog_version_id BIGINT REFERENCES catalog_versions(id),
@@ -113,25 +75,20 @@ CREATE TABLE IF NOT EXISTS field_list_values (
 
 CREATE TABLE IF NOT EXISTS template_fields (
   id BIGSERIAL PRIMARY KEY,
-  template_id BIGINT NOT NULL REFERENCES templates(id) ON DELETE CASCADE,
-  field_definition_id BIGINT NOT NULL REFERENCES field_definitions(id) ON DELETE CASCADE,
-  is_required BOOLEAN NOT NULL DEFAULT FALSE,
-  display_order INTEGER NOT NULL DEFAULT 0,
-  default_value TEXT,
-  validation_rule TEXT,
-  write_mode VARCHAR(20) NOT NULL DEFAULT 'manual',
-  catalog_version_id BIGINT REFERENCES catalog_versions(id),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT uq_template_fields UNIQUE (template_id, field_definition_id),
-  CONSTRAINT chk_template_fields_write_mode CHECK (write_mode IN ('manual', 'auto', 'system'))
+  template_id BIGINT NOT NULL,
+  field_name VARCHAR(120) NOT NULL,
+  field_label_api VARCHAR(255) NOT NULL,
+  field_type VARCHAR(60) NOT NULL,
+  is_required BOOLEAN NOT NULL DEFAULT TRUE,
+  CONSTRAINT uq_template_fields UNIQUE (template_id, field_name)
 );
 
 CREATE TABLE IF NOT EXISTS support_teams (
   id BIGSERIAL PRIMARY KEY,
   team_name VARCHAR(255) NOT NULL,
   financial_institution_name VARCHAR(255) NOT NULL,
-  catalog_version_id BIGINT REFERENCES catalog_versions(id),
+  auth_server UUID NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT uq_support_teams UNIQUE (team_name, financial_institution_name)
@@ -182,7 +139,6 @@ CREATE TABLE IF NOT EXISTS endpoints (
   http_method VARCHAR(16) NOT NULL,
   api_name VARCHAR(255) NOT NULL,
   api_version_id BIGINT REFERENCES api_versions(id),
-  category_id BIGINT REFERENCES categories(id),
   monitored_item_id BIGINT REFERENCES monitored_items(id),
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   catalog_version_id BIGINT REFERENCES catalog_versions(id),
@@ -210,7 +166,6 @@ CREATE TABLE IF NOT EXISTS ticket_owner_rules (
   ticket_owner_id BIGINT NOT NULL REFERENCES ticket_owners(id) ON DELETE CASCADE,
   rule_group_code VARCHAR(120) NOT NULL,
   logical_operator VARCHAR(8) NOT NULL DEFAULT 'AND',
-  field_definition_id BIGINT REFERENCES field_definitions(id),
   field_code VARCHAR(120) NOT NULL,
   operator VARCHAR(20) NOT NULL,
   expected_value TEXT NOT NULL,
@@ -257,20 +212,16 @@ CREATE TABLE IF NOT EXISTS catalog_load_executions (
   CONSTRAINT chk_catalog_load_executions_status CHECK (status IN ('running', 'success', 'failed'))
 );
 
-CREATE INDEX IF NOT EXISTS idx_categories_lookup
-  ON categories (record_type, level_1, level_2, level_3);
 
 CREATE INDEX IF NOT EXISTS idx_category_templates_category
-  ON category_templates (category_id, is_default, priority_order);
+  ON category_templates (category_name, sub_category_name, third_level_category_name, type);
 
 CREATE INDEX IF NOT EXISTS idx_field_api_mappings_api_key
   ON field_api_mappings (api_key);
 
 CREATE INDEX IF NOT EXISTS idx_template_fields_template
-  ON template_fields (template_id, is_required, display_order);
+  ON template_fields (template_id, is_required, field_name);
 
-CREATE INDEX IF NOT EXISTS idx_endpoints_category
-  ON endpoints (category_id, is_active);
 
 CREATE INDEX IF NOT EXISTS idx_ticket_owners_active
   ON ticket_owners (is_active, is_triage_team, is_fallback_owner);
@@ -281,8 +232,6 @@ CREATE INDEX IF NOT EXISTS idx_ticket_owner_rules_lookup
 CREATE INDEX IF NOT EXISTS idx_ticket_owner_rules_field
   ON ticket_owner_rules (field_code, operator, is_active);
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_ticket_owner_rules_unique_item
-  ON ticket_owner_rules (ticket_owner_id, rule_group_code, field_code, operator, expected_value);
 
 INSERT INTO estado_ticket (id, nome) VALUES
   (1, 'NOVO'),

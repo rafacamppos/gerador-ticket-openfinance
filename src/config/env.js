@@ -6,9 +6,16 @@ const projectEnvPath = path.join(projectRoot, '.env');
 
 dotenv.config({ path: projectEnvPath });
 
+const DEFAULT_SESSION_SECRET = 'open-finance-local-session-secret';
+
+if (!process.env.SESSION_SECRET) {
+  // eslint-disable-next-line no-console
+  console.warn('[config] SESSION_SECRET not set — using insecure default. Set it in production.');
+}
+
 module.exports = {
   port: Number(process.env.PORT) || 3000,
-  sessionSecret: process.env.SESSION_SECRET || 'open-finance-local-session-secret',
+  sessionSecret: process.env.SESSION_SECRET || DEFAULT_SESSION_SECRET,
   sessionTtlSeconds: Number(process.env.SESSION_TTL_SECONDS) || 43200,
   sessionCookieSecure:
     String(process.env.SESSION_COOKIE_SECURE || '').trim().toLowerCase() === 'true',

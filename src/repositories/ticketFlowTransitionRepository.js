@@ -15,20 +15,30 @@ async function ensureStateExists(client, ticketId, transition) {
 
   const insertedState = await client.query(
     `
-      INSERT INTO ticket_flow_states (
-        ticket_id,
-        ticket_title,
-        ticket_status,
-        requester_company_name,
-        requester_company_key,
-        current_stage,
-        current_owner_slug,
-        current_owner_name,
-        assigned_owner_slug,
-        assigned_owner_name
+      WITH inserted AS (
+        INSERT INTO ticket_flow_states (
+          ticket_id,
+          ticket_title,
+          ticket_status,
+          requester_company_name,
+          requester_company_key,
+          current_stage,
+          current_owner_slug,
+          assigned_owner_slug
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING *
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-      RETURNING *
+      SELECT
+        i.*,
+        towner.name AS current_owner_name,
+        aowner.name AS assigned_owner_name,
+        NULL::text AS last_actor_name,
+        NULL::text AS last_actor_email,
+        NULL::text AS last_action
+      FROM inserted i
+      LEFT JOIN ticket_owners towner ON towner.slug = i.current_owner_slug
+      LEFT JOIN ticket_owners aowner ON aowner.slug = i.assigned_owner_slug
     `,
     [
       Number(ticketId),
@@ -38,9 +48,7 @@ async function ensureStateExists(client, ticketId, transition) {
       transition.initial_state.requester_company_key || null,
       transition.initial_state.current_stage,
       transition.initial_state.current_owner_slug || null,
-      transition.initial_state.current_owner_name || null,
       transition.initial_state.assigned_owner_slug || null,
-      transition.initial_state.assigned_owner_name || null,
     ]
   );
 
@@ -50,26 +58,40 @@ async function ensureStateExists(client, ticketId, transition) {
 async function updateState(client, ticketId, nextState, action) {
   const updatedStateResult = await client.query(
     `
-      UPDATE ticket_flow_states
-      SET
-        ticket_title = COALESCE($2, ticket_title),
-        ticket_status = COALESCE($3, ticket_status),
-        requester_company_name = COALESCE($4, requester_company_name),
-        requester_company_key = COALESCE($5, requester_company_key),
-        current_stage = $6,
-        current_owner_slug = $7,
-        current_owner_name = $8,
-        assigned_owner_slug = $9,
-        assigned_owner_name = $10,
-        accepted_by_team = $11,
-        responded_by_team = $12,
-        returned_to_su = $13,
-        last_actor_name = $14,
-        last_actor_email = $15,
-        last_action = $16,
-        updated_at = NOW()
-      WHERE ticket_id = $1
-      RETURNING *
+      WITH updated AS (
+        UPDATE ticket_flow_states
+        SET
+          ticket_title = COALESCE($2, ticket_title),
+          ticket_status = COALESCE($3, ticket_status),
+          requester_company_name = COALESCE($4, requester_company_name),
+          requester_company_key = COALESCE($5, requester_company_key),
+          current_stage = $6,
+          current_owner_slug = $7,
+          assigned_owner_slug = $8,
+          accepted_by_team = $9,
+          responded_by_team = $10,
+          returned_to_su = $11,
+          updated_at = NOW()
+        WHERE ticket_id = $1
+        RETURNING *
+      )
+      SELECT
+        u.*,
+        towner.name AS current_owner_name,
+        aowner.name AS assigned_owner_name,
+        evt.actor_name AS last_actor_name,
+        evt.actor_email AS last_actor_email,
+        evt.action AS last_action
+      FROM updated u
+      LEFT JOIN ticket_owners towner ON towner.slug = u.current_owner_slug
+      LEFT JOIN ticket_owners aowner ON aowner.slug = u.assigned_owner_slug
+      LEFT JOIN LATERAL (
+        SELECT actor_name, actor_email, action
+        FROM ticket_flow_events
+        WHERE ticket_id = u.ticket_id
+        ORDER BY created_at DESC
+        LIMIT 1
+      ) evt ON TRUE
     `,
     [
       Number(ticketId),
@@ -79,15 +101,10 @@ async function updateState(client, ticketId, nextState, action) {
       nextState.requester_company_key || null,
       nextState.current_stage,
       nextState.current_owner_slug || null,
-      nextState.current_owner_name || null,
       nextState.assigned_owner_slug || null,
-      nextState.assigned_owner_name || null,
       Boolean(nextState.accepted_by_team),
       Boolean(nextState.responded_by_team),
       Boolean(nextState.returned_to_su),
-      nextState.last_actor_name || null,
-      nextState.last_actor_email || null,
-      action,
     ]
   );
 

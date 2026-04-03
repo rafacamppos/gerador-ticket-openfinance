@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS ticket_owner_endpoints (
   endpoint VARCHAR(1024) NOT NULL,
   method VARCHAR(16) NOT NULL,
   description VARCHAR(255),
+  category_template_id BIGINT NOT NULL REFERENCES category_templates(id),
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

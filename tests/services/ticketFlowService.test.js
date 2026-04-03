@@ -2,10 +2,11 @@ const test = require('node:test');
 const assert = require('node:assert');
 
 const ticketFlowService = require('../../src/services/ticketFlowService');
+const { buildInitialStateSeed, buildTransition } = require('../../src/services/ticketFlowTransitions');
 const ticketFlowRepository = require('../../src/repositories/ticketFlowRepository');
 
 test('buildInitialStateSeed creates routed state when ticket is classified to an owner team', () => {
-  const seed = ticketFlowService.buildInitialStateSeed({
+  const seed = buildInitialStateSeed({
     ticket: {
       id: '119681',
       title: 'Ticket de teste',
@@ -28,18 +29,15 @@ test('buildInitialStateSeed creates routed state when ticket is classified to an
     requester_company_key: 'bco_santander_brasil_s_a',
     current_stage: 'routed_to_owner',
     current_owner_slug: 'consentimentos-outbound',
-    current_owner_name: 'Consentimentos Outbound',
     assigned_owner_slug: 'consentimentos-outbound',
-    assigned_owner_name: 'Consentimentos Outbound',
     accepted_by_team: false,
     responded_by_team: false,
     returned_to_su: false,
-    last_action: null,
   });
 });
 
 test('buildInitialStateSeed maps final statuses to consistent flow stages', () => {
-  const closedSeed = ticketFlowService.buildInitialStateSeed({
+  const closedSeed = buildInitialStateSeed({
     ticket: {
       id: '200',
       title: 'Ticket encerrado',
@@ -51,7 +49,7 @@ test('buildInitialStateSeed maps final statuses to consistent flow stages', () =
     },
   });
 
-  const canceledSeed = ticketFlowService.buildInitialStateSeed({
+  const canceledSeed = buildInitialStateSeed({
     ticket: {
       id: '201',
       title: 'Ticket cancelado',
@@ -66,15 +64,13 @@ test('buildInitialStateSeed maps final statuses to consistent flow stages', () =
   assert.strictEqual(closedSeed.current_stage, 'closed_canceled');
   assert.strictEqual(closedSeed.accepted_by_team, true);
   assert.strictEqual(closedSeed.responded_by_team, true);
-  assert.strictEqual(closedSeed.last_action, 'closed');
 
   assert.strictEqual(canceledSeed.current_stage, 'closed_canceled');
   assert.strictEqual(canceledSeed.returned_to_su, true);
-  assert.strictEqual(canceledSeed.last_action, 'canceled');
 });
 
 test('buildTransition moves ticket from SU to target owner', () => {
-  const transition = ticketFlowService.buildTransition(null, {
+  const transition = buildTransition(null, {
     ticketId: '119681',
     action: 'route_to_owner',
     targetOwnerSlug: 'consentimentos-outbound',
@@ -94,7 +90,7 @@ test('buildTransition moves ticket from SU to target owner', () => {
 test('buildTransition rejects SU as target owner for route_to_owner', () => {
   assert.throws(
     () =>
-      ticketFlowService.buildTransition(null, {
+      buildTransition(null, {
         ticketId: '119681',
         action: 'route_to_owner',
         targetOwnerSlug: 'su-super-usuarios',
@@ -108,14 +104,12 @@ test('buildTransition rejects SU as target owner for route_to_owner', () => {
 test('buildTransition rejects current owner as target owner for route_to_owner', () => {
   assert.throws(
     () =>
-      ticketFlowService.buildTransition(
+      buildTransition(
         {
           ticket_id: '119681',
           current_stage: 'triage_su',
           current_owner_slug: 'consentimentos-outbound',
-          current_owner_name: 'Consentimentos Outbound',
           assigned_owner_slug: 'consentimentos-outbound',
-          assigned_owner_name: 'Consentimentos Outbound',
           accepted_by_team: false,
           responded_by_team: false,
           returned_to_su: false,
@@ -132,7 +126,7 @@ test('buildTransition rejects current owner as target owner for route_to_owner',
 });
 
 test('buildTransition preserves requester company fields in subsequent transitions', () => {
-  const transition = ticketFlowService.buildTransition(
+  const transition = buildTransition(
     {
       ticket_id: '119681',
       ticket_title: 'Ticket de teste',
@@ -141,9 +135,9 @@ test('buildTransition preserves requester company fields in subsequent transitio
       requester_company_key: 'belvo',
       current_stage: 'routed_to_owner',
       current_owner_slug: 'consentimentos-outbound',
-      current_owner_name: 'Consentimentos Outbound',
+
       assigned_owner_slug: 'consentimentos-outbound',
-      assigned_owner_name: 'Consentimentos Outbound',
+
       accepted_by_team: false,
       responded_by_team: false,
       returned_to_su: false,
@@ -159,14 +153,14 @@ test('buildTransition preserves requester company fields in subsequent transitio
 });
 
 test('buildTransition accepts ticket inside the owner queue', () => {
-  const transition = ticketFlowService.buildTransition(
+  const transition = buildTransition(
     {
       ticket_id: '119681',
       current_stage: 'routed_to_owner',
       current_owner_slug: 'consentimentos-outbound',
-      current_owner_name: 'Consentimentos Outbound',
+
       assigned_owner_slug: 'consentimentos-outbound',
-      assigned_owner_name: 'Consentimentos Outbound',
+
       accepted_by_team: false,
       responded_by_team: false,
       returned_to_su: false,
@@ -183,14 +177,14 @@ test('buildTransition accepts ticket inside the owner queue', () => {
 });
 
 test('buildTransition returns ticket to SU when team rejects or sends back', () => {
-  const transition = ticketFlowService.buildTransition(
+  const transition = buildTransition(
     {
       ticket_id: '119681',
       current_stage: 'accepted_by_owner',
       current_owner_slug: 'consentimentos-outbound',
-      current_owner_name: 'Consentimentos Outbound',
+
       assigned_owner_slug: 'consentimentos-outbound',
-      assigned_owner_name: 'Consentimentos Outbound',
+
       accepted_by_team: true,
       responded_by_team: false,
       returned_to_su: false,
@@ -208,14 +202,14 @@ test('buildTransition returns ticket to SU when team rejects or sends back', () 
 });
 
 test('buildTransition marks ticket as responded by owner', () => {
-  const transition = ticketFlowService.buildTransition(
+  const transition = buildTransition(
     {
       ticket_id: '119681',
       current_stage: 'accepted_by_owner',
       current_owner_slug: 'consentimentos-outbound',
-      current_owner_name: 'Consentimentos Outbound',
+
       assigned_owner_slug: 'consentimentos-outbound',
-      assigned_owner_name: 'Consentimentos Outbound',
+
       accepted_by_team: true,
       responded_by_team: false,
       returned_to_su: false,

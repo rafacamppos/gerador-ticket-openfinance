@@ -51,13 +51,10 @@ function buildInitialStateSeed(ticket = {}) {
     requester_company_key: normalizeRequesterCompanyKey(requesterCompanyName),
     current_stage: currentStage,
     current_owner_slug: ownerSlug,
-    current_owner_name: ownerName,
     assigned_owner_slug: routedToOwner ? ownerSlug : null,
-    assigned_owner_name: routedToOwner ? ownerName : null,
     accepted_by_team: acceptedByTeam,
     responded_by_team: respondedByTeam,
     returned_to_su: returnedToSu,
-    last_action: lastAction,
   };
 }
 
@@ -81,15 +78,10 @@ function buildTransition(currentState, payload = {}) {
         requester_company_key: normalizeRequesterCompanyKey(payload.requesterCompanyName || null),
         current_stage: TICKET_FLOW_STAGES.TRIAGE_SU,
         current_owner_slug: SU_OWNER.slug,
-        current_owner_name: SU_OWNER.name,
         assigned_owner_slug: null,
-        assigned_owner_name: null,
         accepted_by_team: false,
         responded_by_team: false,
         returned_to_su: false,
-        last_actor_name: null,
-        last_actor_email: null,
-        last_action: null,
       };
 
   const nextState = {
@@ -101,8 +93,6 @@ function buildTransition(currentState, payload = {}) {
     requester_company_key: normalizeRequesterCompanyKey(
       payload.requesterCompanyName || baseState.requester_company_name || null
     ),
-    last_actor_name: actorName,
-    last_actor_email: actorEmail,
   };
 
   if (action === TICKET_FLOW_ACTIONS.ROUTE_TO_OWNER) {
@@ -125,9 +115,7 @@ function buildTransition(currentState, payload = {}) {
 
     nextState.current_stage = TICKET_FLOW_STAGES.ROUTED_TO_OWNER;
     nextState.current_owner_slug = targetOwnerSlug;
-    nextState.current_owner_name = targetOwnerName;
     nextState.assigned_owner_slug = targetOwnerSlug;
-    nextState.assigned_owner_name = targetOwnerName;
     nextState.accepted_by_team = false;
     nextState.responded_by_team = false;
     nextState.returned_to_su = false;
@@ -145,7 +133,6 @@ function buildTransition(currentState, payload = {}) {
   ) {
     nextState.current_stage = TICKET_FLOW_STAGES.RETURNED_TO_SU;
     nextState.current_owner_slug = SU_OWNER.slug;
-    nextState.current_owner_name = SU_OWNER.name;
     nextState.returned_to_su = true;
     nextState.accepted_by_team = false;
   } else {
