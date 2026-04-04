@@ -1,4 +1,5 @@
 const { buildError } = require('./openFinanceServiceErrors');
+const { TIPO_CLIENTE, CANAL_JORNADA } = require('../contracts/applicationIncidentContract');
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -42,6 +43,50 @@ function normalizeJsonPayload(value, fieldName) {
   }
 
   return value;
+}
+
+function normalizeTipoCliente(value) {
+  const normalizedValue = String(value || '').trim();
+  const allowed = Object.values(TIPO_CLIENTE);
+
+  if (!normalizedValue) {
+    throw buildError(`Field "tipo_cliente" is required.`);
+  }
+
+  if (!allowed.includes(normalizedValue)) {
+    throw buildError(`Field "tipo_cliente" must be one of: ${allowed.join(', ')}.`);
+  }
+
+  return normalizedValue;
+}
+
+function normalizeCanalJornada(value) {
+  const normalizedValue = String(value || '').trim();
+  const allowed = Object.values(CANAL_JORNADA);
+
+  if (!normalizedValue) {
+    throw buildError(`Field "canal_jornada" is required.`);
+  }
+
+  if (!allowed.includes(normalizedValue)) {
+    throw buildError(`Field "canal_jornada" must be one of: ${allowed.join(', ')}.`);
+  }
+
+  return normalizedValue;
+}
+
+function normalizeTitle(value) {
+  const normalizedValue = String(value || '').trim();
+
+  if (!normalizedValue) {
+    throw buildError('Field "title" is required.');
+  }
+
+  if (normalizedValue.length > 255) {
+    throw buildError('Field "title" must be at most 255 characters.');
+  }
+
+  return normalizedValue;
 }
 
 function normalizeDescription(value) {
@@ -129,7 +174,10 @@ function normalizeRelatedTicketId(value, { required = false } = {}) {
 }
 
 module.exports = {
+  normalizeCanalJornada,
   normalizeDescription,
+  normalizeTitle,
+  normalizeTipoCliente,
   normalizeEndpoint,
   normalizeHttpMethod,
   normalizeHttpStatusCode,

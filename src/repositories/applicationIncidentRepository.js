@@ -14,9 +14,12 @@ async function createIncident(payload) {
         payload_response,
         occurred_at,
         http_status_code,
-        description
+        title,
+        description,
+        tipo_cliente,
+        canal_jornada
       )
-      VALUES ($1, $2::uuid, $3::uuid, $4::uuid, $5, $6, $7::jsonb, $8::jsonb, $9::timestamptz, $10, $11)
+      VALUES ($1, $2::uuid, $3::uuid, $4::uuid, $5, $6, $7::jsonb, $8::jsonb, $9::timestamptz, $10, $11, $12, $13, $14)
       RETURNING *
     `,
     [
@@ -30,7 +33,10 @@ async function createIncident(payload) {
       JSON.stringify(payload.payload_response),
       payload.occurred_at,
       payload.http_status_code,
+      payload.title,
       payload.description,
+      payload.tipo_cliente,
+      payload.canal_jornada,
     ]
   );
 

@@ -99,9 +99,7 @@ async function createTicketFromIncident(teamSlug, incidentId, payload, headers, 
 
   const enrichedContext = {
     ...ctx,
-    title: ctx.description || '',
-    tipo_cliente: String(payload.tipo_cliente || '').trim(),
-    canal_jornada: String(payload.canal_jornada || '').trim(),
+    title: ctx.title || '',
   };
 
   const { info, missing } = buildInfoPayload(templateFields, enrichedContext);

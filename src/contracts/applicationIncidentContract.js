@@ -1,3 +1,16 @@
+const TIPO_CLIENTE = {
+  PF: 'PF',
+  PJ: 'PJ',
+};
+
+const CANAL_JORNADA = {
+  APP_TO_APP:         'App to app',
+  APP_TO_BROWSER:     'App to browser',
+  BROWSER_TO_BROWSER: 'Browser to browser',
+  BROWSER_TO_APP:     'Browser to app',
+  NA:                 'Não se aplica',
+};
+
 const INCIDENT_STATUS = {
   NEW: 'new',
   ASSIGNED: 'assigned',
@@ -21,7 +34,9 @@ function getIncidentStatusLabel(status) {
 }
 
 module.exports = {
+  CANAL_JORNADA,
   INCIDENT_STATUS,
   INCIDENT_STATUS_LABELS,
+  TIPO_CLIENTE,
   getIncidentStatusLabel,
 };

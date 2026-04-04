@@ -15,7 +15,14 @@ CREATE TABLE IF NOT EXISTS application_incidents (
   assigned_to_user_id BIGINT REFERENCES ticket_users(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  title VARCHAR(255) NOT NULL,
   description VARCHAR(1024) NOT NULL,
+  tipo_cliente VARCHAR(32) NOT NULL,
+  canal_jornada VARCHAR(64) NOT NULL DEFAULT 'Não se aplica',
+  CONSTRAINT chk_application_incidents_tipo_cliente
+    CHECK (tipo_cliente IN ('PF', 'PJ')),
+  CONSTRAINT chk_application_incidents_canal_jornada
+    CHECK (canal_jornada IN ('App to app', 'App to browser', 'Browser to browser', 'Browser to app', 'Não se aplica')),
   CONSTRAINT chk_application_incidents_method
     CHECK (method IN ('GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD')),
   CONSTRAINT chk_application_incidents_status_code

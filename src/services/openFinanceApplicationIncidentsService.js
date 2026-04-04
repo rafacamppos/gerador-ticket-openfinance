@@ -5,7 +5,10 @@ const applicationIncidentRepository = require('../repositories/applicationIncide
 const incidentTicketRepository = require('../repositories/incidentTicketRepository');
 const { normalizeIncidentRow } = require('./applicationIncidentMapper');
 const {
+  normalizeCanalJornada,
   normalizeDescription,
+  normalizeTitle,
+  normalizeTipoCliente,
   normalizeEndpoint,
   normalizeHttpMethod,
   normalizeHttpStatusCode,
@@ -39,6 +42,9 @@ async function reportApplicationIncident(teamSlug, payload = {}) {
       payload.client_id,
       'client_id'
     ),
+    title: normalizeTitle(payload.title),
+    tipo_cliente: normalizeTipoCliente(payload.tipo_cliente),
+    canal_jornada: normalizeCanalJornada(payload.canal_jornada),
     endpoint: normalizeEndpoint(payload.endpoint),
     method: normalizeHttpMethod(payload.method),
     payload_request: normalizeJsonPayload(payload.payload_request, 'payload_request'),

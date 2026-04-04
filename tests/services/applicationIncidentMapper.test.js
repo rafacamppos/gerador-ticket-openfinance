@@ -12,6 +12,9 @@ test('normalizeIncidentRow maps raw DB row to normalized shape', () => {
     client_id: '550e8400-e29b-41d4-a716-446655440002',
     endpoint: '/consents/v3/consents',
     method: 'POST',
+    title: 'Falha na criação de consentimento',
+    tipo_cliente: 'PF',
+    canal_jornada: 'App to app',
     payload_request: { consentId: 'urn:abc' },
     payload_response: { error: 'DETALHE_PGTO_INVALIDO' },
     occurred_at: '2025-01-15T10:30:00Z',
@@ -29,6 +32,9 @@ test('normalizeIncidentRow maps raw DB row to normalized shape', () => {
   assert.strictEqual(result.id, '42');
   assert.strictEqual(result.team_slug, 'consentimentos');
   assert.strictEqual(result.endpoint, '/consents/v3/consents');
+  assert.strictEqual(result.title, 'Falha na criação de consentimento');
+  assert.strictEqual(result.tipo_cliente, 'PF');
+  assert.strictEqual(result.canal_jornada, 'App to app');
   assert.deepStrictEqual(result.payload_request, { consentId: 'urn:abc' });
   assert.deepStrictEqual(result.payload_response, { error: 'DETALHE_PGTO_INVALIDO' });
   assert.strictEqual(result.occurred_at, '2025-01-15T10:30:00Z');
@@ -45,7 +51,10 @@ test('normalizeIncidentRow handles missing optional fields', () => {
   assert.strictEqual(result.team_slug, null);
   assert.strictEqual(result.related_ticket_id, null);
   assert.strictEqual(result.assigned_to_user_id, null);
+  assert.strictEqual(result.title, null);
   assert.strictEqual(result.description, null);
+  assert.strictEqual(result.tipo_cliente, null);
+  assert.strictEqual(result.canal_jornada, null);
 });
 
 test('normalizeIncidentRow returns empty objects for missing payloads', () => {

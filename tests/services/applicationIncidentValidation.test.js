@@ -4,6 +4,9 @@ const {
   normalizeUuid,
   normalizeTeamSlug,
   normalizeJsonPayload,
+  normalizeTipoCliente,
+  normalizeCanalJornada,
+  normalizeTitle,
   normalizeDescription,
   normalizeEndpoint,
   normalizeHttpMethod,
@@ -41,6 +44,49 @@ test('normalizeJsonPayload accepts object', () => {
 test('normalizeJsonPayload throws for non-object', () => {
   assert.throws(() => normalizeJsonPayload('string', 'payload_request'), /JSON object/i);
   assert.throws(() => normalizeJsonPayload(null, 'payload_request'), /JSON object/i);
+});
+
+test('normalizeTipoCliente aceita PF e PJ', () => {
+  assert.strictEqual(normalizeTipoCliente('PF'), 'PF');
+  assert.strictEqual(normalizeTipoCliente('PJ'), 'PJ');
+});
+
+test('normalizeTipoCliente throws para valor invalido', () => {
+  assert.throws(() => normalizeTipoCliente('X'), /must be one of/i);
+});
+
+test('normalizeTipoCliente throws para valor vazio', () => {
+  assert.throws(() => normalizeTipoCliente(''), /required/i);
+  assert.throws(() => normalizeTipoCliente(null), /required/i);
+});
+
+test('normalizeCanalJornada aceita todos os canais validos', () => {
+  const canais = ['App to app', 'App to browser', 'Browser to browser', 'Browser to app', 'Não se aplica'];
+  for (const canal of canais) {
+    assert.strictEqual(normalizeCanalJornada(canal), canal);
+  }
+});
+
+test('normalizeCanalJornada throws para valor invalido', () => {
+  assert.throws(() => normalizeCanalJornada('Inválido'), /must be one of/i);
+});
+
+test('normalizeCanalJornada throws para valor vazio', () => {
+  assert.throws(() => normalizeCanalJornada(''), /required/i);
+  assert.throws(() => normalizeCanalJornada(null), /required/i);
+});
+
+test('normalizeTitle accepts valid string', () => {
+  assert.strictEqual(normalizeTitle('Falha na criação de consentimento'), 'Falha na criação de consentimento');
+});
+
+test('normalizeTitle throws for empty value', () => {
+  assert.throws(() => normalizeTitle(''), /required/i);
+  assert.throws(() => normalizeTitle(null), /required/i);
+});
+
+test('normalizeTitle throws when longer than 255 characters', () => {
+  assert.throws(() => normalizeTitle('x'.repeat(256)), /255/i);
 });
 
 test('normalizeDescription accepts valid string', () => {

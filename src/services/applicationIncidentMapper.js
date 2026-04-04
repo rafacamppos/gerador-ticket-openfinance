@@ -10,6 +10,7 @@ function normalizeIncidentRow(row = {}) {
     team_name: row.team_name || null,
 
     // request context
+    title: row.title || null,
     x_fapi_interaction_id: row.x_fapi_interaction_id || null,
     authorization_server: row.authorization_server || null,
     client_id: row.client_id || null,
@@ -20,6 +21,8 @@ function normalizeIncidentRow(row = {}) {
     occurred_at: row.occurred_at || null,
     http_status_code: row.http_status_code ?? null,
     description: row.description || null,
+    tipo_cliente: row.tipo_cliente || null,
+    canal_jornada: row.canal_jornada || null,
 
     // ticket context (resolved via ticket_owner_endpoints, category_templates, api_versions, support_teams)
     ticket_context: row.template_id
