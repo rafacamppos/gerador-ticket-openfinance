@@ -184,6 +184,7 @@ test('incident mapper and contracts expose normalized labels', () => {
       occurred_at: '2026-03-30T10:00:00.000Z',
       http_status_code: 500,
       description: 'Erro ao criar consentimento',
+      ticket_context: null,
       incident_status: 'assigned',
       incident_status_label: 'Atribuido',
       related_ticket_id: '999',

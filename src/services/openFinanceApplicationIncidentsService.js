@@ -2,6 +2,7 @@ const { buildError } = require('./openFinanceServiceErrors');
 const { INCIDENT_STATUS } = require('../contracts/applicationIncidentContract');
 const ticketOwnerRepository = require('../repositories/ticketOwnerRepository');
 const applicationIncidentRepository = require('../repositories/applicationIncidentRepository');
+const incidentTicketRepository = require('../repositories/incidentTicketRepository');
 const { normalizeIncidentRow } = require('./applicationIncidentMapper');
 const {
   normalizeDescription,
@@ -72,7 +73,7 @@ async function getApplicationIncidentById(teamSlug, incidentId) {
     throw buildError('Path param "incidentId" is required.');
   }
 
-  const incident = await applicationIncidentRepository.getIncidentById(
+  const incident = await incidentTicketRepository.getIncidentTicketContext(
     normalizedTeamSlug,
     normalizedIncidentId
   );

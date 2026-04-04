@@ -53,3 +53,30 @@ test('normalizeIncidentRow returns empty objects for missing payloads', () => {
   assert.deepStrictEqual(result.payload_request, {});
   assert.deepStrictEqual(result.payload_response, {});
 });
+
+test('normalizeIncidentRow exposes ticket_context when template_id is present', () => {
+  const row = {
+    template_id: 123328,
+    destinatario: 'ITAÚ UNIBANCO S.A.',
+    category_name: 'Erro na Jornada ou Dados',
+    sub_category_name: 'Obtendo um Consentimento',
+    third_level_category_name: 'Criação de Consentimento',
+    api_name_version: 'Open Banking Brasil Consents API 3.0',
+    api_version: '3.0.0',
+    product_feature: 'Consentimentos',
+    stage_name_version: 'Consents v3.0',
+  };
+
+  const result = normalizeIncidentRow(row);
+
+  assert.notStrictEqual(result.ticket_context, null);
+  assert.strictEqual(result.ticket_context.template_id, '123328');
+  assert.strictEqual(result.ticket_context.destinatario, 'ITAÚ UNIBANCO S.A.');
+  assert.strictEqual(result.ticket_context.category_name, 'Erro na Jornada ou Dados');
+  assert.strictEqual(result.ticket_context.api_name_version, 'Open Banking Brasil Consents API 3.0');
+});
+
+test('normalizeIncidentRow sets ticket_context to null when template_id is absent', () => {
+  const result = normalizeIncidentRow({ id: 1 });
+  assert.strictEqual(result.ticket_context, null);
+});

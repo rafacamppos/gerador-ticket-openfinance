@@ -80,6 +80,8 @@ CREATE TABLE IF NOT EXISTS template_fields (
   field_label_api VARCHAR(255) NOT NULL,
   field_type VARCHAR(60) NOT NULL,
   is_required BOOLEAN NOT NULL DEFAULT TRUE,
+  context_key VARCHAR(120),
+  list_options JSONB,
   CONSTRAINT uq_template_fields UNIQUE (template_id, field_name)
 );
 

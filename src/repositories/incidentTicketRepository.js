@@ -18,8 +18,11 @@ async function getIncidentTicketContext(ownerSlug, incidentId) {
         ai.description,
         ai.incident_status,
         ai.related_ticket_id,
+        ai.assigned_to_user_id,
         towner.slug  AS team_slug,
         towner.name  AS team_name,
+        tu.name      AS assigned_to_name,
+        tu.email     AS assigned_to_email,
         toe.category_template_id,
         ct.category_name,
         ct.sub_category_name,
@@ -34,6 +37,8 @@ async function getIncidentTicketContext(ownerSlug, incidentId) {
       FROM application_incidents ai
       JOIN ticket_owners towner
         ON towner.id = ai.ticket_owner_id
+      LEFT JOIN ticket_users tu
+        ON tu.id = ai.assigned_to_user_id
       LEFT JOIN ticket_owner_endpoints toe
         ON toe.ticket_owner_id = ai.ticket_owner_id
         AND toe.endpoint = ai.endpoint
@@ -64,7 +69,7 @@ async function getIncidentTicketContext(ownerSlug, incidentId) {
 async function getTemplateFields(templateId) {
   const result = await getPool().query(
     `
-      SELECT field_name, field_label_api, field_type, is_required
+      SELECT field_name, field_label_api, field_type, is_required, context_key, list_options
       FROM template_fields
       WHERE template_id = $1
       ORDER BY id ASC

@@ -55,6 +55,7 @@ test('reportApplicationIncident validates, resolves owner and persists incident'
       occurred_at: '2026-03-29T10:15:00.000Z',
       http_status_code: 500,
       description: 'Erro ao processar consentimento',
+      ticket_context: null,
       incident_status: 'new',
       incident_status_label: 'Novo',
       related_ticket_id: null,

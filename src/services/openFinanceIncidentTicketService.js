@@ -6,39 +6,63 @@ const { normalizeIncidentRow } = require('./applicationIncidentMapper');
 const openFinanceDeskClient = require('../clients/openFinanceDeskClient');
 
 /**
- * Maps known service-desk field codes (field_label_api) to value extractors.
- * The context object contains all enriched incident data including API version
- * and financial institution details resolved at query time.
+ * Resolves a list field value using the field's list_options map.
+ *
+ * Supported key formats in list_options:
+ *   "=<value>"  — exact match with higher priority (e.g. "=429")
+ *   "<digit>xx" — first-digit range match           (e.g. "4xx", "5xx")
+ *   "*"         — default/wildcard
+ *   "<label>"   — direct label match               (e.g. "PF", "App to app")
  */
-const FIELD_EXTRACTORS = {
-  CustomColumn38sr:  (ctx) => ctx.destinatario || '',
-  CustomColumn72sr:  (ctx) => ctx.client_id || '',
-  CustomColumn68sr:  (ctx) => `${ctx.method} ${ctx.endpoint}`,
-  CustomColumn69sr:  (ctx) => JSON.stringify(ctx.payload_request || {}),
-  CustomColumn229sr: (ctx) => String(ctx.http_status_code || ''),
-  CustomColumn71sr:  (ctx) => JSON.stringify(ctx.payload_response || {}),
-  CustomColumn114sr: (ctx) => ctx.api_name_version || '',
-  CustomColumn115sr: (ctx) => ctx.api_version || '',
-  CustomColumn165sr: (ctx) => ctx.product_feature || '',
-  CustomColumn166sr: (ctx) => ctx.stage_name_version || '',
-  CustomColumn120sr: (ctx) => ctx.tipo_cliente || '',
-  CustomColumn174sr: (ctx) => ctx.canal_jornada || '',
-  CustomColumn156sr: (ctx) => ctx.x_fapi_interaction_id || '',
-};
+function resolveListOption(listOptions, rawValue) {
+  const str = String(rawValue);
+
+  if (listOptions[`=${str}`] !== undefined) return listOptions[`=${str}`];
+  if (listOptions[str]        !== undefined) return listOptions[str];
+
+  const rangeKey = `${str[0]}xx`;
+  if (listOptions[rangeKey]   !== undefined) return listOptions[rangeKey];
+
+  return listOptions['*'] ?? '';
+}
+
+function extractFieldValue(field, context) {
+  const raw = context[field.context_key];
+  if (raw === undefined || raw === null || raw === '') return '';
+
+  if (field.list_options) {
+    return resolveListOption(field.list_options, raw);
+  }
+
+  if (typeof raw === 'object') return JSON.stringify(raw);
+
+  return String(raw);
+}
+
+function buildBaseFields(context) {
+  return [
+    { key: 'title',                value: context.title || '' },
+    { key: 'description',          value: context.description || '' },
+    { key: 'problem_type',         value: context.category_name || '' },
+    { key: 'problem_sub_type',     value: context.sub_category_name || '' },
+    { key: 'third_level_category', value: context.third_level_category_name || '' },
+  ];
+}
 
 function buildInfoPayload(templateFields, context) {
   const missing = [];
 
-  const info = templateFields.map((field) => {
-    const extractor = FIELD_EXTRACTORS[field.field_label_api];
-    const value = extractor ? extractor(context) : '';
+  const customFields = templateFields.map((field) => {
+    const value = extractFieldValue(field, context);
 
     if (field.is_required && !value) {
       missing.push(field.field_name);
     }
 
-    return { field: field.field_label_api, value };
+    return { key: field.field_label_api, value };
   });
+
+  const info = [...buildBaseFields(context), ...customFields];
 
   return { info, missing };
 }
@@ -75,6 +99,7 @@ async function createTicketFromIncident(teamSlug, incidentId, payload, headers, 
 
   const enrichedContext = {
     ...ctx,
+    title: ctx.description || '',
     tipo_cliente: String(payload.tipo_cliente || '').trim(),
     canal_jornada: String(payload.canal_jornada || '').trim(),
   };
