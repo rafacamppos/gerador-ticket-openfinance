@@ -18,7 +18,7 @@ test('getEnvironment returns the current environment and the available options',
   assert.deepStrictEqual(res.body.current, {
     key: 'production',
     label: 'PRODUCAO',
-    baseUrl: 'https://servicedesk.openfinancebrasil.org.br',
+    baseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
   });
 });
 

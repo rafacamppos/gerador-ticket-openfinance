@@ -3,6 +3,7 @@ const assert = require('node:assert');
 
 const applicationIncidentsService = require('../../src/services/openFinanceApplicationIncidentsService');
 const applicationIncidentRepository = require('../../src/repositories/applicationIncidentRepository');
+const incidentTicketRepository = require('../../src/repositories/incidentTicketRepository');
 const ticketOwnerRepository = require('../../src/repositories/ticketOwnerRepository');
 
 test('reportApplicationIncident validates, resolves owner and persists incident', async () => {
@@ -31,6 +32,9 @@ test('reportApplicationIncident validates, resolves owner and persists incident'
         x_fapi_interaction_id: '7f4f2946-d1f3-4c9e-9a2b-bd4e2f30d4a3',
         authorization_server: '3c8c00be-f66b-4db2-a777-d833ee4d3d96',
         client_id: '96cc36f8-11e1-4f3f-bbbe-9fd6cc4eb4b3',
+        title: 'Falha ao processar consentimento',
+        tipo_cliente: 'PF',
+        canal_jornada: 'APP_TO_APP',
         endpoint: '/open-banking/consents/v3/consents',
         method: 'post',
         payload_request: { consentId: 'urn:abc' },
@@ -48,6 +52,9 @@ test('reportApplicationIncident validates, resolves owner and persists incident'
       x_fapi_interaction_id: '7f4f2946-d1f3-4c9e-9a2b-bd4e2f30d4a3',
       authorization_server: '3c8c00be-f66b-4db2-a777-d833ee4d3d96',
       client_id: '96cc36f8-11e1-4f3f-bbbe-9fd6cc4eb4b3',
+      title: 'Falha ao processar consentimento',
+      tipo_cliente: 'PF',
+      canal_jornada: 'App to app',
       endpoint: '/open-banking/consents/v3/consents',
       method: 'POST',
       payload_request: { consentId: 'urn:abc' },
@@ -133,8 +140,8 @@ test('listApplicationIncidents normalizes incidents by team', async () => {
 });
 
 test('getApplicationIncidentById returns 404 when incident is not found', async () => {
-  const originalGetIncidentById = applicationIncidentRepository.getIncidentById;
-  applicationIncidentRepository.getIncidentById = async () => null;
+  const originalGetIncidentTicketContext = incidentTicketRepository.getIncidentTicketContext;
+  incidentTicketRepository.getIncidentTicketContext = async () => null;
 
   try {
     await assert.rejects(
@@ -146,7 +153,7 @@ test('getApplicationIncidentById returns 404 when incident is not found', async 
       /Incidente não encontrado/i
     );
   } finally {
-    applicationIncidentRepository.getIncidentById = originalGetIncidentById;
+    incidentTicketRepository.getIncidentTicketContext = originalGetIncidentTicketContext;
   }
 });
 

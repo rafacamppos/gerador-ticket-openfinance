@@ -146,7 +146,7 @@ test('environment service resolves by key label and base url', () => {
   assert.deepStrictEqual(resolveEnvironment('HOMOLOGACAO'), available[1]);
   assert.deepStrictEqual(
     resolveEnvironment('https://servicedesksandbox.openfinancebrasil.org.br'),
-    available[1]
+    available[0]
   );
   assert.strictEqual(getDefaultEnvironment().key.length > 0, true);
   assert.strictEqual(resolveEnvironment(''), null);
@@ -161,11 +161,14 @@ test('incident mapper and contracts expose normalized labels', () => {
       id: 10,
       team_slug: 'consentimentos-inbound',
       team_name: 'Consentimentos Inbound',
+      title: 'Falha no consentimento',
       payload_request: { consentId: 'urn:abc' },
       payload_response: { error: 'DETALHE_PGTO_INVALIDO' },
       occurred_at: '2026-03-30T10:00:00.000Z',
       http_status_code: 500,
       description: 'Erro ao criar consentimento',
+      tipo_cliente: 'PF',
+      canal_jornada: 'App to app',
       incident_status: 'assigned',
       related_ticket_id: 999,
       assigned_to_user_id: 8,
@@ -174,6 +177,7 @@ test('incident mapper and contracts expose normalized labels', () => {
       id: '10',
       team_slug: 'consentimentos-inbound',
       team_name: 'Consentimentos Inbound',
+      title: 'Falha no consentimento',
       x_fapi_interaction_id: null,
       authorization_server: null,
       client_id: null,
@@ -184,6 +188,8 @@ test('incident mapper and contracts expose normalized labels', () => {
       occurred_at: '2026-03-30T10:00:00.000Z',
       http_status_code: 500,
       description: 'Erro ao criar consentimento',
+      tipo_cliente: 'PF',
+      canal_jornada: 'App to app',
       ticket_context: null,
       incident_status: 'assigned',
       incident_status_label: 'Atribuido',

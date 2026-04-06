@@ -293,3 +293,228 @@ test('syncTicketFlows persists immutable closed statuses only when they do not e
     ticketFlowRepository.getStatesByTicketIds = originalGetStatesByTicketIds;
   }
 });
+
+test('syncTicketFlows returns empty array when there are no seed states', async () => {
+  const response = await ticketFlowService.syncTicketFlows([
+    {
+      ticket: {
+        id: '10',
+        status: 'NOVO',
+      },
+      routing: null,
+    },
+  ]);
+
+  assert.deepStrictEqual(response, []);
+});
+
+test('syncTicketFlows returns empty array when repository throws', async () => {
+  const originalGetStatesByTicketIds = ticketFlowRepository.getStatesByTicketIds;
+  ticketFlowRepository.getStatesByTicketIds = async () => {
+    throw new Error('db unavailable');
+  };
+
+  try {
+    const response = await ticketFlowService.syncTicketFlows([
+      {
+        ticket: {
+          id: '1',
+          title: 'Ticket ativo',
+          status: 'NOVO',
+        },
+        routing: {
+          owner_slug: 'consentimentos-outbound',
+          owner_name: 'Consentimentos Outbound',
+        },
+      },
+    ]);
+
+    assert.deepStrictEqual(response, []);
+  } finally {
+    ticketFlowRepository.getStatesByTicketIds = originalGetStatesByTicketIds;
+  }
+});
+
+test('attachFlowStates enriches tickets with normalized flow state', async () => {
+  const originalGetStatesByTicketIds = ticketFlowRepository.getStatesByTicketIds;
+  ticketFlowRepository.getStatesByTicketIds = async () => [
+    {
+      ticket_id: 10,
+      ticket_title: 'Ticket A',
+      ticket_status: 'NOVO',
+      requester_company_name: 'Belvo',
+      requester_company_key: 'belvo',
+      current_stage: 'routed_to_owner',
+      current_owner_slug: 'time-a',
+      current_owner_name: 'Time A',
+      assigned_owner_slug: 'time-a',
+      assigned_owner_name: 'Time A',
+      accepted_by_team: false,
+      responded_by_team: false,
+      returned_to_su: false,
+      last_actor_name: 'Rafael',
+      last_actor_email: 'rafael@example.com',
+      last_action: 'route_to_owner',
+      updated_at: '2026-03-29T10:20:00.000Z',
+    },
+  ];
+
+  try {
+    const response = await ticketFlowService.attachFlowStates([
+      { ticket: { id: '10' } },
+      { ticket: { id: '20' } },
+    ]);
+
+    assert.strictEqual(response[0].flow.ticket_id, '10');
+    assert.strictEqual(response[0].flow.current_owner_name, 'Time A');
+    assert.strictEqual(response[1].flow, null);
+  } finally {
+    ticketFlowRepository.getStatesByTicketIds = originalGetStatesByTicketIds;
+  }
+});
+
+test('attachFlowStates returns original tickets when repository throws', async () => {
+  const originalGetStatesByTicketIds = ticketFlowRepository.getStatesByTicketIds;
+  const tickets = [{ ticket: { id: '10' } }];
+  ticketFlowRepository.getStatesByTicketIds = async () => {
+    throw new Error('db unavailable');
+  };
+
+  try {
+    const response = await ticketFlowService.attachFlowStates(tickets);
+    assert.strictEqual(response, tickets);
+  } finally {
+    ticketFlowRepository.getStatesByTicketIds = originalGetStatesByTicketIds;
+  }
+});
+
+test('getTicketFlow returns normalized state and events', async () => {
+  const originalGetStateByTicketId = ticketFlowRepository.getStateByTicketId;
+  const originalListEventsByTicketId = ticketFlowRepository.listEventsByTicketId;
+
+  ticketFlowRepository.getStateByTicketId = async () => ({
+    ticket_id: 10,
+    ticket_title: 'Ticket A',
+    ticket_status: 'NOVO',
+    requester_company_name: 'Belvo',
+    requester_company_key: 'belvo',
+    current_stage: 'routed_to_owner',
+    current_owner_slug: 'time-a',
+    current_owner_name: 'Time A',
+    assigned_owner_slug: 'time-a',
+    assigned_owner_name: 'Time A',
+    accepted_by_team: false,
+    responded_by_team: false,
+    returned_to_su: false,
+  });
+  ticketFlowRepository.listEventsByTicketId = async () => [
+    {
+      id: 1,
+      ticket_id: 10,
+      action: 'route_to_owner',
+      from_stage: 'triage_su',
+      to_stage: 'routed_to_owner',
+      from_owner_slug: 'su-super-usuarios',
+      to_owner_slug: 'time-a',
+      actor_name: 'Rafael',
+      actor_email: 'rafael@example.com',
+      note: 'Encaminhado',
+      payload_json: { reason: 'match' },
+      created_at: '2026-03-29T10:20:00.000Z',
+    },
+  ];
+
+  try {
+    const response = await ticketFlowService.getTicketFlow('10');
+    assert.strictEqual(response.state.ticket_id, '10');
+    assert.strictEqual(response.events[0].id, 1);
+    assert.strictEqual(response.events[0].action, 'route_to_owner');
+  } finally {
+    ticketFlowRepository.getStateByTicketId = originalGetStateByTicketId;
+    ticketFlowRepository.listEventsByTicketId = originalListEventsByTicketId;
+  }
+});
+
+test('listTicketFlows normalizes query filters and rows', async () => {
+  const originalListStates = ticketFlowRepository.listStates;
+  let captured = null;
+  ticketFlowRepository.listStates = async (filters) => {
+    captured = filters;
+    return [
+      {
+        ticket_id: 10,
+        current_stage: 'routed_to_owner',
+        current_owner_slug: 'time-a',
+      },
+    ];
+  };
+
+  try {
+    const response = await ticketFlowService.listTicketFlows({
+      currentOwnerSlug: 'time-a',
+      acceptedByTeam: 'sim',
+      responded_by_team: 'nao',
+      returned_to_su: 'desconhecido',
+    });
+
+    assert.deepStrictEqual(captured, {
+      current_owner_slug: 'time-a',
+      current_stage: null,
+      accepted_by_team: true,
+      responded_by_team: false,
+      returned_to_su: null,
+    });
+    assert.strictEqual(response[0].ticket_id, '10');
+  } finally {
+    ticketFlowRepository.listStates = originalListStates;
+  }
+});
+
+test('transitionTicketFlow builds transition from current state and returns normalized result', async () => {
+  const originalGetStateByTicketId = ticketFlowRepository.getStateByTicketId;
+  const originalTransitionState = ticketFlowRepository.transitionState;
+  const originalListEventsByTicketId = ticketFlowRepository.listEventsByTicketId;
+
+  ticketFlowRepository.getStateByTicketId = async () => ({
+    ticket_id: 10,
+    current_stage: 'routed_to_owner',
+    current_owner_slug: 'time-a',
+    assigned_owner_slug: 'time-a',
+    accepted_by_team: false,
+    responded_by_team: false,
+    returned_to_su: false,
+  });
+  ticketFlowRepository.transitionState = async () => ({
+    ticket_id: 10,
+    current_stage: 'accepted_by_owner',
+    current_owner_slug: 'time-a',
+    assigned_owner_slug: 'time-a',
+    accepted_by_team: true,
+    responded_by_team: false,
+    returned_to_su: false,
+  });
+  ticketFlowRepository.listEventsByTicketId = async () => [
+    {
+      id: 1,
+      ticket_id: 10,
+      action: 'accept',
+      from_stage: 'routed_to_owner',
+      to_stage: 'accepted_by_owner',
+      created_at: '2026-03-29T10:20:00.000Z',
+    },
+  ];
+
+  try {
+    const response = await ticketFlowService.transitionTicketFlow('10', {
+      action: 'accept',
+      actorName: 'Rafael',
+    });
+
+    assert.strictEqual(response.state.current_stage, 'accepted_by_owner');
+    assert.strictEqual(response.events[0].action, 'accept');
+  } finally {
+    ticketFlowRepository.getStateByTicketId = originalGetStateByTicketId;
+    ticketFlowRepository.transitionState = originalTransitionState;
+    ticketFlowRepository.listEventsByTicketId = originalListEventsByTicketId;
+  }
+});

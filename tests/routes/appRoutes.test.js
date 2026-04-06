@@ -42,6 +42,7 @@ test('app registers the expected HTTP routes', () => {
   assert.deepStrictEqual(routes, [
     'GET /api/v1/open-finance/:teamSlug/application-incidents',
     'GET /api/v1/open-finance/:teamSlug/application-incidents/:incidentId',
+    'GET /api/v1/open-finance/:teamSlug/application-incidents/:incidentId/ticket-preview',
     'GET /api/v1/open-finance/auth/me',
     'GET /api/v1/open-finance/environment',
     'GET /api/v1/open-finance/ticket-flows',

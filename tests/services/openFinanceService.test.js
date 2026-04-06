@@ -3,6 +3,7 @@ const assert = require('node:assert');
 const path = require('node:path');
 
 const client = require('../../src/clients/openFinanceDeskClient');
+const { openFinancePassword, openFinanceUsername } = require('../../src/config/env');
 const service = require('../../src/services/openFinanceService');
 const ticketOwnerClassificationService = require('../../src/services/ticketOwnerClassificationService');
 const ticketFlowService = require('../../src/services/ticketFlowService');
@@ -462,8 +463,8 @@ test('createSession uses backend configured credentials when payload is empty', 
     assert.deepStrictEqual(captured, {
       path: '/login',
       body: {
-        user_name: 'atendimento-open-finance@sxxxxxx.com.br',
-        password: 'xxxxxxxxxxx',
+        user_name: openFinanceUsername,
+        password: openFinancePassword,
       },
     });
   } finally {

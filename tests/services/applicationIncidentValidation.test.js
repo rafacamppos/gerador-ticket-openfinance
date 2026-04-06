@@ -61,9 +61,10 @@ test('normalizeTipoCliente throws para valor vazio', () => {
 });
 
 test('normalizeCanalJornada aceita todos os canais validos', () => {
-  const canais = ['App to app', 'App to browser', 'Browser to browser', 'Browser to app', 'Não se aplica'];
-  for (const canal of canais) {
-    assert.strictEqual(normalizeCanalJornada(canal), canal);
+  const canais = ['APP_TO_APP', 'APP_TO_BROWSER', 'BROWSER_TO_BROWSER', 'BROWSER_TO_APP', 'NA'];
+  const esperados = ['App to app', 'App to browser', 'Browser to browser', 'Browser to app', 'Não se aplica'];
+  for (const [index, canal] of canais.entries()) {
+    assert.strictEqual(normalizeCanalJornada(canal), esperados[index]);
   }
 });
 

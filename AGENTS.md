@@ -66,6 +66,7 @@ Exemplos:
 - Evitar testes excessivamente acoplados à implementação interna
 - Sempre que possível, reduzir duplicação com helpers simples e reutilizáveis
 - Identificar e sinalizar mocks frágeis, com risco de efeito colateral ou alto acoplamento
+- Validar as jornadas sem executar chamadas para a API publica do ServiceDesk, os testes devem ser feito somente com mock.
 
 ### Para testes de controllers, validar sempre que aplicável:
 - status code retornado
