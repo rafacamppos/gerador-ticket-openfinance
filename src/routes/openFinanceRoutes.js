@@ -29,6 +29,10 @@ router.post(
   '/:teamSlug/application-incidents/:incidentId/transitions',
   openFinanceApplicationIncidentsController.transitionIncident
 );
+router.get(
+  '/:teamSlug/application-incidents/:incidentId/ticket-preview',
+  openFinanceApplicationIncidentsController.getTicketPreview
+);
 router.post(
   '/:teamSlug/application-incidents/:incidentId/create-ticket',
   openFinanceApplicationIncidentsController.createTicketFromIncident

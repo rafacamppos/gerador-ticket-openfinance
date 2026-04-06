@@ -19,7 +19,8 @@ INSERT INTO template_fields (
   (123328, 'Etapa(nome e versão api)',                   'CustomColumn166sr', 'text',              TRUE, 'stage_name_version',    NULL),
   (123328, 'Tipo do Cliente',                            'CustomColumn120sr', 'list_multi_select', TRUE, 'tipo_cliente',          '{"PF":"1","PJ":"2"}'),
   (123328, 'Canal da Jornada',                           'CustomColumn174sr', 'list',              TRUE, 'canal_jornada',         '{"App to app":"1","App to browser":"2","Browser to browser":"3","Browser to app":"4","Não se aplica":"5"}'),
-  (123328, 'X-Fapi-Interaction-ID',                      'CustomColumn156sr', 'long',              TRUE, 'x_fapi_interaction_id', NULL)
+  (123328, 'X-Fapi-Interaction-ID',                      'CustomColumn156sr', 'long',              TRUE, 'x_fapi_interaction_id', NULL),
+  (123328, 'Destinatário',                               'CustomColumn38sr',  'text',              TRUE, 'destinatario',          NULL)
 ON CONFLICT (template_id, field_name) DO UPDATE
 SET
   field_label_api = EXCLUDED.field_label_api,

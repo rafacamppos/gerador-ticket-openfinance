@@ -62,17 +62,17 @@ function normalizeTipoCliente(value) {
 
 function normalizeCanalJornada(value) {
   const normalizedValue = String(value || '').trim();
-  const allowed = Object.values(CANAL_JORNADA);
+  const allowedKeys = Object.keys(CANAL_JORNADA);
 
   if (!normalizedValue) {
     throw buildError(`Field "canal_jornada" is required.`);
   }
 
-  if (!allowed.includes(normalizedValue)) {
-    throw buildError(`Field "canal_jornada" must be one of: ${allowed.join(', ')}.`);
+  if (!allowedKeys.includes(normalizedValue)) {
+    throw buildError(`Field "canal_jornada" must be one of: ${allowedKeys.join(', ')}.`);
   }
 
-  return normalizedValue;
+  return CANAL_JORNADA[normalizedValue];
 }
 
 function normalizeTitle(value) {

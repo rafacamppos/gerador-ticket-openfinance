@@ -36,7 +36,7 @@ async function getIncidentTicketContext(ownerSlug, incidentId) {
         av.api_version,
         av.product_feature,
         av.stage_name_version,
-        st.financial_institution_name AS destinatario
+        COALESCE(st.financial_institution_name, towner.name) AS destinatario
       FROM application_incidents ai
       JOIN ticket_owners towner
         ON towner.id = ai.ticket_owner_id

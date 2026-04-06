@@ -27,7 +27,7 @@ function normalizeIncidentRow(row = {}) {
     // ticket context (resolved via ticket_owner_endpoints, category_templates, api_versions, support_teams)
     ticket_context: row.template_id
       ? {
-          destinatario: row.destinatario || null,
+          destinatario: row.destinatario || row.team_name || null,
           category_name: row.category_name || null,
           sub_category_name: row.sub_category_name || null,
           third_level_category_name: row.third_level_category_name || null,

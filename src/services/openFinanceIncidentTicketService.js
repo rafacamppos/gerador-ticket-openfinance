@@ -67,6 +67,61 @@ function buildInfoPayload(templateFields, context) {
   return { info, missing };
 }
 
+/**
+ * Extracts the human-readable option keys from a list_options map,
+ * filtering out resolution patterns (=<val>, <digit>xx, *).
+ * These are the valid raw values a user can select/submit.
+ */
+function extractDisplayOptions(listOptions) {
+  if (!listOptions) return null;
+  const directKeys = Object.keys(listOptions).filter(
+    (k) => !k.startsWith('=') && !/^[0-9]xx$/.test(k) && k !== '*'
+  );
+  return directKeys.length > 0 ? directKeys : null;
+}
+
+async function getTicketPreview(teamSlug, incidentId) {
+  const ctx = await incidentTicketRepository.getIncidentTicketContext(
+    String(teamSlug || '').trim(),
+    Number(incidentId)
+  );
+
+  if (!ctx) {
+    throw buildError('Incidente não encontrado.', 404);
+  }
+
+  if (!ctx.template_id) {
+    throw buildError(
+      'Nenhum template de ticket encontrado para o endpoint deste incidente.',
+      422
+    );
+  }
+
+  const templateFields = await incidentTicketRepository.getTemplateFields(ctx.template_id);
+
+  return {
+    template_id:   String(ctx.template_id),
+    template_type: ctx.template_type,
+    title:         ctx.title       || '',
+    description:   ctx.description || '',
+    template_fields: templateFields.map((field) => {
+      const raw = ctx[field.context_key];
+      const value = raw === null || raw === undefined
+        ? ''
+        : typeof raw === 'object'
+          ? JSON.stringify(raw, null, 2)
+          : String(raw);
+      return {
+        key:      field.field_label_api,
+        label:    field.field_name,
+        required: field.is_required || false,
+        value,
+        options:  extractDisplayOptions(field.list_options),
+      };
+    }),
+  };
+}
+
 async function createTicketFromIncident(teamSlug, incidentId, payload, headers, context) {
   const ctx = await incidentTicketRepository.getIncidentTicketContext(
     String(teamSlug || '').trim(),
@@ -99,17 +154,31 @@ async function createTicketFromIncident(teamSlug, incidentId, payload, headers, 
 
   const enrichedContext = {
     ...ctx,
-    title: ctx.title || '',
+    title:       payload.title       || ctx.title       || '',
+    description: payload.description || ctx.description || '',
   };
 
-  const { info, missing } = buildInfoPayload(templateFields, enrichedContext);
+  const baseFields = buildBaseFields(enrichedContext);
 
-  if (missing.length) {
-    throw buildError(
-      `Campos obrigatórios não preenchidos: ${missing.join(', ')}.`,
-      422
-    );
+  let customFields;
+  if (Array.isArray(payload.template_fields) && payload.template_fields.length > 0) {
+    const fieldByKey = new Map(templateFields.map((f) => [f.field_label_api, f]));
+    customFields = payload.template_fields.map(({ key, value }) => {
+      const field = fieldByKey.get(key);
+      const resolved = field?.list_options
+        ? resolveListOption(field.list_options, value)
+        : String(value ?? '');
+      return { key, value: resolved };
+    });
+  } else {
+    const { info: autoInfo, missing } = buildInfoPayload(templateFields, enrichedContext);
+    if (missing.length) {
+      throw buildError(`Campos obrigatórios não preenchidos: ${missing.join(', ')}.`, 422);
+    }
+    customFields = autoInfo.filter((f) => !baseFields.some((b) => b.key === f.key));
   }
+
+  const info = [...baseFields, ...customFields];
 
   const ticketResponse = await openFinanceDeskClient.postJson(
     '/sr',
@@ -140,4 +209,5 @@ async function createTicketFromIncident(teamSlug, incidentId, payload, headers, 
 module.exports = {
   buildInfoPayload,
   createTicketFromIncident,
+  getTicketPreview,
 };

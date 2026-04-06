@@ -70,6 +70,18 @@ async function transitionIncident(req, res, next) {
   }
 }
 
+async function getTicketPreview(req, res, next) {
+  try {
+    const response = await openFinanceIncidentTicketService.getTicketPreview(
+      req.params.teamSlug,
+      req.params.incidentId
+    );
+    res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+}
+
 async function createTicketFromIncident(req, res, next) {
   try {
     const response = await executeWithManagedSession(req, (headers, context) =>
@@ -91,6 +103,7 @@ module.exports = {
   assignIncidentToMe,
   createTicketFromIncident,
   getApplicationIncidentById,
+  getTicketPreview,
   listApplicationIncidents,
   reportIncident,
   transitionIncident,
