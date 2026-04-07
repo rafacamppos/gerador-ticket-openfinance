@@ -5,6 +5,8 @@ const path = require('node:path');
 const client = require('../../src/clients/openFinanceDeskClient');
 const { openFinancePassword, openFinanceUsername } = require('../../src/config/env');
 const service = require('../../src/services/openFinanceService');
+const openFinanceAuthService = require('../../src/services/openFinanceAuthService');
+const openFinanceTicketsService = require('../../src/services/openFinanceTicketsService');
 const ticketOwnerClassificationService = require('../../src/services/ticketOwnerClassificationService');
 const ticketFlowService = require('../../src/services/ticketFlowService');
 
@@ -1520,4 +1522,139 @@ test('listRequiredTemplateFields uses template id as fallback query value', asyn
   } finally {
     client.getJson = originalGetJson;
   }
+});
+
+// --- openFinanceAuthService missing branches ---
+
+test('ensureSessionPayload throws when password is missing', async () => {
+  const envModulePath = path.resolve(__dirname, '../../src/config/env.js');
+  const authServiceModulePath = path.resolve(__dirname, '../../src/services/openFinanceAuthService.js');
+
+  const originalEnvModule = require.cache[envModulePath];
+  const originalAuthServiceModule = require.cache[authServiceModulePath];
+
+  delete require.cache[envModulePath];
+  delete require.cache[authServiceModulePath];
+
+  require.cache[envModulePath] = {
+    id: envModulePath, filename: envModulePath, loaded: true,
+    exports: { ...require('../../src/config/env'), openFinanceUsername: 'user@test.com', openFinancePassword: '' },
+  };
+
+  try {
+    const freshAuthService = require('../../src/services/openFinanceAuthService');
+    await assert.rejects(
+      () => freshAuthService.createSession({}),
+      /password/i
+    );
+  } finally {
+    require.cache[envModulePath] = originalEnvModule;
+    require.cache[authServiceModulePath] = originalAuthServiceModule;
+  }
+});
+
+test('createSession logs payload when openFinanceLogLoginPayload is true', async () => {
+  const envModulePath = path.resolve(__dirname, '../../src/config/env.js');
+  const authServiceModulePath = path.resolve(__dirname, '../../src/services/openFinanceAuthService.js');
+
+  const originalEnvModule = require.cache[envModulePath];
+  const originalAuthServiceModule = require.cache[authServiceModulePath];
+
+  delete require.cache[envModulePath];
+  delete require.cache[authServiceModulePath];
+
+  require.cache[envModulePath] = {
+    id: envModulePath, filename: envModulePath, loaded: true,
+    exports: {
+      ...require('../../src/config/env'),
+      openFinanceUsername: 'user@test.com',
+      openFinancePassword: 'secret123',
+      openFinanceLogLoginPayload: true,
+    },
+  };
+
+  const originalPostJsonWithMeta = client.postJsonWithMeta;
+  client.postJsonWithMeta = async () => ({
+    payload: { cache: 'token', sessionId: 'abc', token: 'tok' },
+    headers: { setCookie: ['JSESSIONID=abc; Path=/'], cookie: [], cache: null },
+  });
+
+  try {
+    const freshAuthService = require('../../src/services/openFinanceAuthService');
+    const result = await freshAuthService.createSession({});
+    assert.ok(result.sessionState);
+  } finally {
+    client.postJsonWithMeta = originalPostJsonWithMeta;
+    require.cache[envModulePath] = originalEnvModule;
+    require.cache[authServiceModulePath] = originalAuthServiceModule;
+  }
+});
+
+// --- openFinanceTicketsService missing branches ---
+
+test('createTicketAttachment throws when file is missing', async () => {
+  await assert.rejects(
+    () => openFinanceTicketsService.createTicketAttachment('123', null, {}, {}),
+    /file.*required/i
+  );
+});
+
+test('downloadTicketAttachment throws when ticketId is missing', async () => {
+  await assert.rejects(
+    () => openFinanceTicketsService.downloadTicketAttachment('', '456', {}, {}),
+    /ticketId.*required/i
+  );
+});
+
+test('downloadTicketAttachment throws when fileId is missing', async () => {
+  await assert.rejects(
+    () => openFinanceTicketsService.downloadTicketAttachment('123', '', {}, {}),
+    /fileId.*required/i
+  );
+});
+
+// --- openFinanceTicketPayloads missing branches ---
+
+const { ensureActivityPayload, ensureTicketUpdatePayload } = require('../../src/services/openFinanceTicketPayloads');
+const { formatTicketList } = require('../../src/utils/openFinanceTicketFormatter');
+const { getIncidentStatusLabel } = require('../../src/contracts/applicationIncidentContract');
+
+test('ensureActivityPayload throws when fromTime or toTime is missing', () => {
+  assert.throws(
+    () => ensureActivityPayload('1', { userId: 'u1', fromTime: null, toTime: null, description: 'test' }),
+    /fromTime.*toTime/i
+  );
+});
+
+test('ensureActivityPayload throws when description is missing', () => {
+  assert.throws(
+    () => ensureActivityPayload('1', { userId: 'u1', fromTime: 100, toTime: 200, description: '' }),
+    /description/i
+  );
+});
+
+test('ensureTicketUpdatePayload throws when info is empty', () => {
+  assert.throws(
+    () => ensureTicketUpdatePayload('1', { info: [] }),
+    /info/i
+  );
+});
+
+// --- formatTicketList missing branch ---
+
+test('formatTicketList returns empty array for non-array input', () => {
+  assert.deepStrictEqual(formatTicketList(null), []);
+  assert.deepStrictEqual(formatTicketList(undefined), []);
+  assert.deepStrictEqual(formatTicketList('string'), []);
+});
+
+// --- applicationIncidentContract missing branch ---
+
+test('getIncidentStatusLabel returns status itself when not in map', () => {
+  assert.strictEqual(getIncidentStatusLabel('custom_status'), 'custom_status');
+});
+
+test('getIncidentStatusLabel returns fallback for null or undefined', () => {
+  assert.strictEqual(getIncidentStatusLabel(null), 'Nao informado');
+  assert.strictEqual(getIncidentStatusLabel(undefined), 'Nao informado');
 });

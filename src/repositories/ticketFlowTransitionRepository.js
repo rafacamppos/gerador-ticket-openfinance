@@ -1,7 +1,12 @@
 async function ensureStateExists(client, ticketId, transition) {
   let stateResult = await client.query(
     `
-      SELECT *
+      SELECT
+        ticket_id, ticket_title, ticket_status,
+        requester_company_name, requester_company_key,
+        current_stage, current_owner_slug, assigned_owner_slug,
+        accepted_by_team, responded_by_team, returned_to_su,
+        created_at, updated_at
       FROM ticket_flow_states
       WHERE ticket_id = $1
       FOR UPDATE
@@ -76,7 +81,11 @@ async function updateState(client, ticketId, nextState, action) {
         RETURNING *
       )
       SELECT
-        u.*,
+        u.ticket_id, u.ticket_title, u.ticket_status,
+        u.requester_company_name, u.requester_company_key,
+        u.current_stage, u.current_owner_slug, u.assigned_owner_slug,
+        u.accepted_by_team, u.responded_by_team, u.returned_to_su,
+        u.created_at, u.updated_at,
         towner.name AS current_owner_name,
         aowner.name AS assigned_owner_name,
         evt.actor_name AS last_actor_name,

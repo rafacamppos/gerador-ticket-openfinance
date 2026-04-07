@@ -3,6 +3,7 @@ const assert = require('node:assert');
 
 const ticketFlowService = require('../../src/services/ticketFlowService');
 const { buildInitialStateSeed, buildTransition } = require('../../src/services/ticketFlowTransitions');
+const { normalizeBoolean } = require('../../src/services/ticketFlowNormalization');
 const ticketFlowRepository = require('../../src/repositories/ticketFlowRepository');
 
 test('buildInitialStateSeed creates routed state when ticket is classified to an owner team', () => {
@@ -297,10 +298,7 @@ test('syncTicketFlows persists immutable closed statuses only when they do not e
 test('syncTicketFlows returns empty array when there are no seed states', async () => {
   const response = await ticketFlowService.syncTicketFlows([
     {
-      ticket: {
-        id: '10',
-        status: 'NOVO',
-      },
+      ticket: {},
       routing: null,
     },
   ]);
@@ -516,5 +514,137 @@ test('transitionTicketFlow builds transition from current state and returns norm
     ticketFlowRepository.getStateByTicketId = originalGetStateByTicketId;
     ticketFlowRepository.transitionState = originalTransitionState;
     ticketFlowRepository.listEventsByTicketId = originalListEventsByTicketId;
+  }
+});
+
+// --- buildInitialStateSeed branches ---
+
+test('buildInitialStateSeed returns null when ticket has no id', () => {
+  assert.strictEqual(buildInitialStateSeed({ ticket: {}, routing: null }), null);
+});
+
+test('buildInitialStateSeed sets closed_canceled stage and respondedByTeam for ATENDIMENTO ENCERRADO', () => {
+  const seed = buildInitialStateSeed({
+    ticket: { id: '1', status: 'ATENDIMENTO ENCERRADO', title: 'Encerrado' },
+    routing: null,
+  });
+  assert.strictEqual(seed.current_stage, 'closed_canceled');
+  assert.strictEqual(seed.accepted_by_team, true);
+  assert.strictEqual(seed.responded_by_team, true);
+});
+
+test('buildInitialStateSeed sets closed_canceled stage and returnedToSu for CANCELADO', () => {
+  const seed = buildInitialStateSeed({
+    ticket: { id: '2', status: 'CANCELADO', title: 'Cancelado' },
+    routing: null,
+  });
+  assert.strictEqual(seed.current_stage, 'closed_canceled');
+  assert.strictEqual(seed.returned_to_su, true);
+});
+
+test('buildInitialStateSeed sets triage_su when routing targets SU owner', () => {
+  const seed = buildInitialStateSeed({
+    ticket: { id: '3', status: 'NOVO' },
+    routing: { owner_slug: 'su-super-usuarios', owner_name: 'SU (Super Usuário)' },
+  });
+  assert.strictEqual(seed.current_stage, 'triage_su');
+  assert.strictEqual(seed.assigned_owner_slug, null);
+});
+
+// --- buildTransition branches ---
+
+test('buildTransition throws when action is missing', () => {
+  assert.throws(
+    () => buildTransition({}, { action: '' }),
+    /action.*required/i
+  );
+});
+
+test('buildTransition throws when route_to_owner is missing targetOwnerSlug', () => {
+  assert.throws(
+    () => buildTransition({}, { action: 'route_to_owner', targetOwnerSlug: '', targetOwnerName: '' }),
+    /targetOwnerSlug.*targetOwnerName/i
+  );
+});
+
+test('buildTransition throws when route_to_owner targets SU', () => {
+  const state = { current_stage: 'triage_su', current_owner_slug: 'su-super-usuarios' };
+  assert.throws(
+    () => buildTransition(state, { action: 'route_to_owner', targetOwnerSlug: 'su-super-usuarios', targetOwnerName: 'SU (Super Usuário)' }),
+    /cannot target SU/i
+  );
+});
+
+test('buildTransition throws when route_to_owner targets current owner', () => {
+  const state = { current_stage: 'routed_to_owner', current_owner_slug: 'consentimentos-outbound' };
+  assert.throws(
+    () => buildTransition(state, { action: 'route_to_owner', targetOwnerSlug: 'consentimentos-outbound', targetOwnerName: 'Consentimentos Outbound' }),
+    /cannot target the current owner/i
+  );
+});
+
+test('buildTransition throws for unsupported action', () => {
+  const state = { current_stage: 'triage_su', current_owner_slug: 'su-super-usuarios' };
+  assert.throws(
+    () => buildTransition(state, { action: 'acao_invalida' }),
+    /Unsupported ticket flow action/i
+  );
+});
+
+test('buildTransition builds state from payload when currentState is null', () => {
+  const result = buildTransition(null, {
+    action: 'accept',
+    ticketId: '99',
+    ticketTitle: 'Ticket Sem Estado',
+    ticketStatus: 'NOVO',
+    requesterCompanyName: 'Banco XYZ',
+  });
+  assert.strictEqual(result.next_state.current_stage, 'accepted_by_owner');
+  assert.strictEqual(result.initial_state.ticket_id, '99');
+  assert.strictEqual(result.initial_state.requester_company_key, 'banco_xyz');
+});
+
+// --- normalizeBoolean branches ---
+
+test('normalizeBoolean returns boolean as-is', () => {
+  assert.strictEqual(normalizeBoolean(true), true);
+  assert.strictEqual(normalizeBoolean(false), false);
+});
+
+test('normalizeBoolean converts number: 0 -> false, non-zero -> true', () => {
+  assert.strictEqual(normalizeBoolean(0), false);
+  assert.strictEqual(normalizeBoolean(1), true);
+  assert.strictEqual(normalizeBoolean(42), true);
+});
+
+test('normalizeBoolean returns null for empty string', () => {
+  assert.strictEqual(normalizeBoolean(''), null);
+  assert.strictEqual(normalizeBoolean(null), null);
+});
+
+test('normalizeBoolean returns null for unrecognized string', () => {
+  assert.strictEqual(normalizeBoolean('maybe'), null);
+});
+
+// --- syncTicketFlows: statesToPersist empty (all immutable and existing) ---
+
+test('syncTicketFlows returns empty when all states are immutable and already exist', async () => {
+  const originalGetStatesByTicketIds = ticketFlowRepository.getStatesByTicketIds;
+  const originalUpsertInitialStates = ticketFlowRepository.upsertInitialStates;
+
+  ticketFlowRepository.getStatesByTicketIds = async () => [{ ticket_id: '5' }];
+  ticketFlowRepository.upsertInitialStates = async () => { throw new Error('should not be called'); };
+
+  try {
+    const result = await ticketFlowService.syncTicketFlows([
+      {
+        ticket: { id: '5', status: 'CANCELADO' },
+        routing: null,
+      },
+    ]);
+    assert.deepStrictEqual(result, []);
+  } finally {
+    ticketFlowRepository.getStatesByTicketIds = originalGetStatesByTicketIds;
+    ticketFlowRepository.upsertInitialStates = originalUpsertInitialStates;
   }
 });

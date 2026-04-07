@@ -147,3 +147,51 @@ test('transitionTicketFlow applies the requested flow transition', async () => {
     service.transitionTicketFlow = originalTransitionTicketFlow;
   }
 });
+
+test('listTicketFlows forwards error to next when service throws', async () => {
+  const original = service.listTicketFlows;
+  service.listTicketFlows = async () => { throw new Error('db error'); };
+
+  const req = { query: {} };
+  const res = createMockResponse();
+  let caught = null;
+
+  try {
+    await controller.listTicketFlows(req, res, (err) => { caught = err; });
+    assert.ok(caught instanceof Error);
+  } finally {
+    service.listTicketFlows = original;
+  }
+});
+
+test('getTicketFlow forwards error to next when service throws', async () => {
+  const original = service.getTicketFlow;
+  service.getTicketFlow = async () => { throw new Error('not found'); };
+
+  const req = { params: { ticketId: '999' } };
+  const res = createMockResponse();
+  let caught = null;
+
+  try {
+    await controller.getTicketFlow(req, res, (err) => { caught = err; });
+    assert.ok(caught instanceof Error);
+  } finally {
+    service.getTicketFlow = original;
+  }
+});
+
+test('transitionTicketFlow forwards error to next when service throws', async () => {
+  const original = service.transitionTicketFlow;
+  service.transitionTicketFlow = async () => { throw new Error('invalid action'); };
+
+  const req = { params: { ticketId: '1' }, body: { action: 'accept' }, session: {} };
+  const res = createMockResponse();
+  let caught = null;
+
+  try {
+    await controller.transitionTicketFlow(req, res, (err) => { caught = err; });
+    assert.ok(caught instanceof Error);
+  } finally {
+    service.transitionTicketFlow = original;
+  }
+});

@@ -47,3 +47,20 @@ test('updateEnvironment stores the selected environment and clears the upstream 
   );
   assert.strictEqual(req.session.openFinanceSession, null);
 });
+
+test('updateEnvironment returns 400 when environment key is invalid', async () => {
+  const req = {
+    body: { environmentKey: 'unknown-env' },
+    session: {},
+  };
+  const res = createMockResponse();
+
+  await controller.updateEnvironment(req, res, (error) => {
+    throw error;
+  });
+
+  assert.strictEqual(res.statusCode, 400);
+  assert.ok(res.body.message);
+  assert.ok(Array.isArray(res.body.details));
+});
+

@@ -83,7 +83,19 @@ function buildListStatesQuery(filters = {}) {
   return {
     text: `
       SELECT
-        tfs.*,
+        tfs.ticket_id,
+        tfs.ticket_title,
+        tfs.ticket_status,
+        tfs.requester_company_name,
+        tfs.requester_company_key,
+        tfs.current_stage,
+        tfs.current_owner_slug,
+        tfs.assigned_owner_slug,
+        tfs.accepted_by_team,
+        tfs.responded_by_team,
+        tfs.returned_to_su,
+        tfs.created_at,
+        tfs.updated_at,
         towner.name AS current_owner_name,
         aowner.name AS assigned_owner_name,
         evt.actor_name AS last_actor_name,

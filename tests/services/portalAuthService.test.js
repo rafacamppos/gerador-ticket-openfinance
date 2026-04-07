@@ -128,3 +128,29 @@ test('getPortalSessionUser returns portal user from session or null', () => {
   assert.deepStrictEqual(service.getPortalSessionUser({ portalUser: { id: '8' } }), { id: '8' });
   assert.strictEqual(service.getPortalSessionUser({}), null);
 });
+
+test('loginPortalUser returns null-safe normalized user when user has missing fields', async () => {
+  const service = require('../../src/services/portalAuthService');
+  const repo = require('../../src/repositories/ticketUserRepository');
+  const originalFind = repo.findActiveUserByEmail;
+
+  repo.findActiveUserByEmail = async () => ({
+    id: null,
+    name: null,
+    email: 'test@example.com',
+    password: 'pass123',
+    profile: null,
+    ticket_owner_id: null,
+    owner_slug: null,
+    owner_name: null,
+  });
+
+  try {
+    const result = await service.loginPortalUser({ email: 'test@example.com', password: 'pass123' });
+    assert.strictEqual(result.id, null);
+    assert.strictEqual(result.team.id, null);
+    assert.strictEqual(result.team.slug, null);
+  } finally {
+    repo.findActiveUserByEmail = originalFind;
+  }
+});

@@ -202,6 +202,104 @@ test('assignApplicationIncidentToUser assigns incident to authenticated user', a
   }
 });
 
+test('reportApplicationIncident throws 404 when owner is not found', async () => {
+  const originalGetActiveOwnerBySlug = ticketOwnerRepository.getActiveOwnerBySlug;
+  ticketOwnerRepository.getActiveOwnerBySlug = async () => null;
+
+  try {
+    await assert.rejects(
+      () => applicationIncidentsService.reportApplicationIncident('slug-inexistente', {
+        x_fapi_interaction_id: '7f4f2946-d1f3-4c9e-9a2b-bd4e2f30d4a3',
+        authorization_server: '3c8c00be-f66b-4db2-a777-d833ee4d3d96',
+        client_id: '96cc36f8-11e1-4f3f-bbbe-9fd6cc4eb4b3',
+        title: 'Falha',
+        tipo_cliente: 'PF',
+        canal_jornada: 'APP_TO_APP',
+        endpoint: '/open-banking/consents/v3/consents',
+        method: 'POST',
+        payload_request: {},
+        payload_response: {},
+        occurred_at: '2026-03-29T10:15:00.000Z',
+        http_status_code: 500,
+        description: 'desc',
+      }),
+      /Equipe não encontrada/i
+    );
+  } finally {
+    ticketOwnerRepository.getActiveOwnerBySlug = originalGetActiveOwnerBySlug;
+  }
+});
+
+test('getApplicationIncidentById throws when incidentId is invalid', async () => {
+  await assert.rejects(
+    () => applicationIncidentsService.getApplicationIncidentById('consentimentos-inbound', 'abc'),
+    /incidentId/i
+  );
+});
+
+test('getApplicationIncidentById throws when incidentId is zero', async () => {
+  await assert.rejects(
+    () => applicationIncidentsService.getApplicationIncidentById('consentimentos-inbound', '0'),
+    /incidentId/i
+  );
+});
+
+test('assignApplicationIncidentToUser throws when incidentId is invalid', async () => {
+  await assert.rejects(
+    () => applicationIncidentsService.assignApplicationIncidentToUser('consentimentos-inbound', 'abc', { assigned_to_user_id: 1 }),
+    /incidentId/i
+  );
+});
+
+test('assignApplicationIncidentToUser throws when assigned_to_user_id is missing', async () => {
+  await assert.rejects(
+    () => applicationIncidentsService.assignApplicationIncidentToUser('consentimentos-inbound', '33', {}),
+    /Usuário autenticado não encontrado/i
+  );
+});
+
+test('assignApplicationIncidentToUser throws 404 when incident is not found', async () => {
+  const originalAssignIncidentToUser = applicationIncidentRepository.assignIncidentToUser;
+  applicationIncidentRepository.assignIncidentToUser = async () => null;
+
+  try {
+    await assert.rejects(
+      () => applicationIncidentsService.assignApplicationIncidentToUser('consentimentos-inbound', '999', { assigned_to_user_id: 1 }),
+      /Incidente não encontrado/i
+    );
+  } finally {
+    applicationIncidentRepository.assignIncidentToUser = originalAssignIncidentToUser;
+  }
+});
+
+test('transitionApplicationIncident throws when incidentId is invalid', async () => {
+  await assert.rejects(
+    () => applicationIncidentsService.transitionApplicationIncident('consentimentos-inbound', 'abc', { incident_status: 'monitoring' }),
+    /incidentId/i
+  );
+});
+
+test('transitionApplicationIncident throws when status is not allowed', async () => {
+  await assert.rejects(
+    () => applicationIncidentsService.transitionApplicationIncident('consentimentos-inbound', '33', { incident_status: 'invalido' }),
+    /incident_status/i
+  );
+});
+
+test('transitionApplicationIncident throws 404 when current incident is not found', async () => {
+  const originalGetIncidentById = applicationIncidentRepository.getIncidentById;
+  applicationIncidentRepository.getIncidentById = async () => null;
+
+  try {
+    await assert.rejects(
+      () => applicationIncidentsService.transitionApplicationIncident('consentimentos-inbound', '999', { incident_status: 'monitoring' }),
+      /Incidente não encontrado/i
+    );
+  } finally {
+    applicationIncidentRepository.getIncidentById = originalGetIncidentById;
+  }
+});
+
 test('transitionApplicationIncident requires related ticket when status is ticket_created', async () => {
   await assert.rejects(
     () =>

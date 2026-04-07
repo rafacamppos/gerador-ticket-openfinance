@@ -21,7 +21,19 @@ async function upsertInitialStates(states = []) {
 
 const STATE_SELECT = `
   SELECT
-    tfs.*,
+    tfs.ticket_id,
+    tfs.ticket_title,
+    tfs.ticket_status,
+    tfs.requester_company_name,
+    tfs.requester_company_key,
+    tfs.current_stage,
+    tfs.current_owner_slug,
+    tfs.assigned_owner_slug,
+    tfs.accepted_by_team,
+    tfs.responded_by_team,
+    tfs.returned_to_su,
+    tfs.created_at,
+    tfs.updated_at,
     towner.name AS current_owner_name,
     aowner.name AS assigned_owner_name,
     evt.actor_name AS last_actor_name,
@@ -75,7 +87,10 @@ async function listStates(filters = {}) {
 async function listEventsByTicketId(ticketId) {
   const result = await getPool().query(
     `
-      SELECT *
+      SELECT
+        id, ticket_id, action, from_stage, to_stage,
+        from_owner_slug, to_owner_slug, actor_name, actor_email,
+        note, payload_json, created_at
       FROM ticket_flow_events
       WHERE ticket_id = $1
       ORDER BY created_at DESC, id DESC

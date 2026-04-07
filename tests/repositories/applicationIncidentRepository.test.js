@@ -120,9 +120,9 @@ test('listIncidentsByOwnerSlug builds pagination clauses and returns rows', asyn
 
     assert.deepStrictEqual(response, [{ id: 1 }, { id: 2 }]);
     assert.match(captured.text, /WHERE towner\.slug = \$1/i);
-    assert.match(captured.text, /LIMIT 10/);
-    assert.match(captured.text, /OFFSET 20/);
-    assert.deepStrictEqual(captured.values, ['time-a']);
+    assert.match(captured.text, /LIMIT \$2/);
+    assert.match(captured.text, /OFFSET \$3/);
+    assert.deepStrictEqual(captured.values, ['time-a', 10, 20]);
   } finally {
     restore();
   }
