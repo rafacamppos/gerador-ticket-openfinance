@@ -66,3 +66,38 @@ test('listTicketStatuses normalizes repository rows', async () => {
     restore();
   }
 });
+
+test('getTicketStatusByName returns normalized status by name', async () => {
+  const { service, restore } = loadServiceWithRepository({
+    async listTicketStatuses() {
+      return [
+        { id: 1, nome: 'NOVO' },
+        { id: 2, nome: 'EM ANÁLISE N1' },
+      ];
+    },
+  });
+
+  try {
+    const response = await service.getTicketStatusByName('novo');
+
+    assert.deepStrictEqual(response, { id: '1', name: 'NOVO' });
+  } finally {
+    restore();
+  }
+});
+
+test('getTicketStatusByName returns null when status does not exist', async () => {
+  const { service, restore } = loadServiceWithRepository({
+    async listTicketStatuses() {
+      return [{ id: 2, nome: 'EM ANÁLISE N1' }];
+    },
+  });
+
+  try {
+    const response = await service.getTicketStatusByName('novo');
+
+    assert.strictEqual(response, null);
+  } finally {
+    restore();
+  }
+});

@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const incidentTicketRepository = require('../../src/repositories/incidentTicketRepository');
 const applicationIncidentRepository = require('../../src/repositories/applicationIncidentRepository');
+const ticketFlowRepository = require('../../src/repositories/ticketFlowRepository');
 const openFinanceDeskClient = require('../../src/clients/openFinanceDeskClient');
 const {
   buildInfoPayload,
@@ -68,9 +69,12 @@ test('buildInfoPayload includes base fields before custom columns', () => {
 
   assert.strictEqual(byKey.title,                'Erro ao criar consentimento');
   assert.strictEqual(byKey.description,          'Erro ao criar consentimento');
-  assert.strictEqual(byKey.problem_type,         'Erro na Jornada ou Dados');
-  assert.strictEqual(byKey.problem_sub_type,     'Obtendo um Consentimento');
-  assert.strictEqual(byKey.third_level_category, 'Criação de Consentimento');
+  assert.strictEqual(
+    byKey.problem_type,
+    'Incidentes_Erro na Jornada ou Dados_Obtendo um Consentimento_Criação de Consentimento'
+  );
+  assert.strictEqual(byKey.problem_sub_type, undefined);
+  assert.strictEqual(byKey.third_level_category, undefined);
 });
 
 test('buildInfoPayload builds full info array from enriched context', () => {
@@ -78,8 +82,8 @@ test('buildInfoPayload builds full info array from enriched context', () => {
 
   assert.strictEqual(missing.length, 0, `Campos faltando: ${missing.join(', ')}`);
 
-  // 5 base fields + 13 custom columns
-  assert.strictEqual(info.length, 5 + TEMPLATE_FIELDS_123328.length);
+  // 4 base fields + 13 custom columns
+  assert.strictEqual(info.length, 4 + TEMPLATE_FIELDS_123328.length);
 
   const byKey = Object.fromEntries(info.map((e) => [e.key, e.value]));
 
@@ -91,6 +95,7 @@ test('buildInfoPayload builds full info array from enriched context', () => {
   assert.strictEqual(byKey.CustomColumn115sr, '3.0.0');
   assert.strictEqual(byKey.CustomColumn165sr, 'Consentimentos');
   assert.strictEqual(byKey.CustomColumn166sr, 'Consents v3.0');
+  assert.strictEqual(byKey.CustomColumn16sr, 'N1 Service Desk');
   assert.strictEqual(byKey.CustomColumn120sr, '1');   // PF → '1'
   assert.strictEqual(byKey.CustomColumn174sr, '1');   // App to app → '1'
   assert.strictEqual(byKey.CustomColumn156sr, 'fapi-uuid-0001');
@@ -293,6 +298,31 @@ test('createTicketFromIncident returns 409 when incident already has a created t
   }
 });
 
+test('createTicketFromIncident returns 409 when incident already has related ticket id', async () => {
+  const originalGetIncidentTicketContext = incidentTicketRepository.getIncidentTicketContext;
+  incidentTicketRepository.getIncidentTicketContext = async () => ({
+    ...BASE_CONTEXT,
+    id: 10,
+    incident_status: 'assigned',
+    related_ticket_id: 98765,
+    template_id: 123328,
+    template_type: '1',
+  });
+
+  try {
+    await assert.rejects(
+      () => createTicketFromIncident('consentimentos-inbound', '10', {}, {}, {}),
+      (error) => {
+        assert.strictEqual(error.status, 409);
+        assert.deepStrictEqual(error.details, { related_ticket_id: '98765' });
+        return /já foi vinculado/i.test(error.message);
+      }
+    );
+  } finally {
+    incidentTicketRepository.getIncidentTicketContext = originalGetIncidentTicketContext;
+  }
+});
+
 test('createTicketFromIncident returns 422 when incident has no template', async () => {
   const originalGetIncidentTicketContext = incidentTicketRepository.getIncidentTicketContext;
   incidentTicketRepository.getIncidentTicketContext = async () => ({
@@ -366,7 +396,9 @@ test('createTicketFromIncident creates ticket with automatic template payload an
   const originalGetTemplateFields = incidentTicketRepository.getTemplateFields;
   const originalPostJson = openFinanceDeskClient.postJson;
   const originalTransitionIncident = applicationIncidentRepository.transitionIncident;
+  const originalUpsertInitialStates = ticketFlowRepository.upsertInitialStates;
   let captured = null;
+  let capturedStates = null;
 
   incidentTicketRepository.getIncidentTicketContext = async () => ({
     ...BASE_CONTEXT,
@@ -385,6 +417,10 @@ test('createTicketFromIncident creates ticket with automatic template payload an
   openFinanceDeskClient.postJson = async (path, body, query, headers, context) => {
     captured = { path, body, query, headers, context };
     return { id: 98765, protocol: 'SR-98765' };
+  };
+  ticketFlowRepository.upsertInitialStates = async (states) => {
+    capturedStates = states;
+    return states;
   };
   applicationIncidentRepository.transitionIncident = async (_teamSlug, _incidentId, payload) => ({
     id: 10,
@@ -424,9 +460,17 @@ test('createTicketFromIncident creates ticket with automatic template payload an
         info: [
           { key: 'title', value: 'Titulo atualizado' },
           { key: 'description', value: 'Descrição atualizada' },
-          { key: 'problem_type', value: 'Erro na Jornada ou Dados' },
-          { key: 'problem_sub_type', value: 'Obtendo um Consentimento' },
-          { key: 'third_level_category', value: 'Criação de Consentimento' },
+          {
+            key: 'problem_type',
+            value: 'Incidentes_Erro na Jornada ou Dados_Obtendo um Consentimento_Criação de Consentimento',
+          },
+          {
+            key: 'CustomColumn16sr',
+            value: 'N1 Service Desk',
+            valueClass: '',
+            valueCaption: 'N1 Service Desk',
+            keyCaption: 'Equipe solucionadora',
+          },
           { key: 'CustomColumn41sr', value: 'ITAÚ UNIBANCO S.A.' },
           { key: 'CustomColumn229sr', value: '3' },
           { key: 'CustomColumn120sr', value: '1' },
@@ -447,19 +491,36 @@ test('createTicketFromIncident creates ticket with automatic template payload an
     assert.strictEqual(response.ticket.id, 98765);
     assert.strictEqual(response.incident.incident_status, 'ticket_created');
     assert.strictEqual(response.incident.related_ticket_id, '98765');
+    assert.deepStrictEqual(capturedStates, [
+      {
+        ticket_id: '98765',
+        ticket_title: 'Titulo atualizado',
+        ticket_status: 'NOVO',
+        requester_company_name: null,
+        requester_company_key: null,
+        current_stage: 'routed_to_owner',
+        current_owner_slug: 'consentimentos-inbound',
+        assigned_owner_slug: 'consentimentos-inbound',
+        accepted_by_team: false,
+        responded_by_team: false,
+        returned_to_su: false,
+      },
+    ]);
   } finally {
     incidentTicketRepository.getIncidentTicketContext = originalGetIncidentTicketContext;
     incidentTicketRepository.getTemplateFields = originalGetTemplateFields;
     openFinanceDeskClient.postJson = originalPostJson;
     applicationIncidentRepository.transitionIncident = originalTransitionIncident;
+    ticketFlowRepository.upsertInitialStates = originalUpsertInitialStates;
   }
 });
 
-test('createTicketFromIncident creates ticket with manual template fields and resolves list options', async () => {
+test('createTicketFromIncident returns 502 when ServiceDesk does not return ticket id', async () => {
   const originalGetIncidentTicketContext = incidentTicketRepository.getIncidentTicketContext;
   const originalGetTemplateFields = incidentTicketRepository.getTemplateFields;
   const originalPostJson = openFinanceDeskClient.postJson;
   const originalTransitionIncident = applicationIncidentRepository.transitionIncident;
+  const originalUpsertInitialStates = ticketFlowRepository.upsertInitialStates;
   let captured = null;
 
   incidentTicketRepository.getIncidentTicketContext = async () => ({
@@ -478,47 +539,58 @@ test('createTicketFromIncident creates ticket with manual template fields and re
     captured = body;
     return { id: null };
   };
-  applicationIncidentRepository.transitionIncident = async (_teamSlug, _incidentId, payload) => ({
-    id: 10,
-    incident_status: payload.incident_status,
-    related_ticket_id: payload.related_ticket_id,
-  });
+  applicationIncidentRepository.transitionIncident = async () => {
+    throw new Error('transitionIncident should not be called');
+  };
+  ticketFlowRepository.upsertInitialStates = async () => {
+    throw new Error('upsertInitialStates should not be called');
+  };
 
   try {
-    const response = await createTicketFromIncident(
-      'consentimentos-inbound',
-      '10',
-      {
-        template_fields: [
-          { key: 'CustomColumn229sr', value: 429 },
-          { key: 'CustomColumn120sr', value: 'PJ' },
-          { key: 'CustomColumn174sr', value: 'Não se aplica' },
-          { key: 'CampoLivre', value: null },
-        ],
-      },
-      {},
-      {}
+    await assert.rejects(
+      () => createTicketFromIncident(
+        'consentimentos-inbound',
+        '10',
+        {
+          template_fields: [
+            { key: 'CustomColumn229sr', value: 429 },
+            { key: 'CustomColumn120sr', value: 'PJ' },
+            { key: 'CustomColumn174sr', value: 'Não se aplica' },
+            { key: 'CampoLivre', value: null },
+          ],
+        },
+        {},
+        {}
+      ),
+      /não retornou o identificador do ticket criado/i
     );
 
     assert.deepStrictEqual(captured, {
       info: [
         { key: 'title', value: 'Erro ao criar consentimento' },
         { key: 'description', value: 'Erro ao criar consentimento' },
-        { key: 'problem_type', value: 'Erro na Jornada ou Dados' },
-        { key: 'problem_sub_type', value: 'Obtendo um Consentimento' },
-        { key: 'third_level_category', value: 'Criação de Consentimento' },
+        {
+          key: 'problem_type',
+          value: 'Incidentes_Erro na Jornada ou Dados_Obtendo um Consentimento_Criação de Consentimento',
+        },
+        {
+          key: 'CustomColumn16sr',
+          value: 'N1 Service Desk',
+          valueClass: '',
+          valueCaption: 'N1 Service Desk',
+          keyCaption: 'Equipe solucionadora',
+        },
         { key: 'CustomColumn229sr', value: '2' },
         { key: 'CustomColumn120sr', value: '2' },
         { key: 'CustomColumn174sr', value: '5' },
         { key: 'CampoLivre', value: '' },
       ],
     });
-    assert.strictEqual(response.ticket_id, null);
-    assert.strictEqual(response.incident.related_ticket_id, null);
   } finally {
     incidentTicketRepository.getIncidentTicketContext = originalGetIncidentTicketContext;
     incidentTicketRepository.getTemplateFields = originalGetTemplateFields;
     openFinanceDeskClient.postJson = originalPostJson;
     applicationIncidentRepository.transitionIncident = originalTransitionIncident;
+    ticketFlowRepository.upsertInitialStates = originalUpsertInitialStates;
   }
 });

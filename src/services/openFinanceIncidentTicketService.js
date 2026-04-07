@@ -2,8 +2,10 @@ const { buildError } = require('./openFinanceServiceErrors');
 const { INCIDENT_STATUS } = require('../contracts/applicationIncidentContract');
 const incidentTicketRepository = require('../repositories/incidentTicketRepository');
 const applicationIncidentRepository = require('../repositories/applicationIncidentRepository');
+const ticketFlowRepository = require('../repositories/ticketFlowRepository');
 const { normalizeIncidentRow } = require('./applicationIncidentMapper');
 const openFinanceDeskClient = require('../clients/openFinanceDeskClient');
+const { buildInitialStateSeed } = require('./ticketFlowTransitions');
 
 /**
  * Resolves a list field value using the field's list_options map.
@@ -39,13 +41,29 @@ function extractFieldValue(field, context) {
   return String(raw);
 }
 
+function buildProblemTypeValue(context) {
+  const parts = [
+    'Incidentes',
+    context.category_name,
+    context.sub_category_name,
+    context.third_level_category_name,
+  ].filter(Boolean);
+
+  return parts.join('_');
+}
+
 function buildBaseFields(context) {
   return [
     { key: 'title',                value: context.title || '' },
     { key: 'description',          value: context.description || '' },
-    { key: 'problem_type',         value: context.category_name || '' },
-    { key: 'problem_sub_type',     value: context.sub_category_name || '' },
-    { key: 'third_level_category', value: context.third_level_category_name || '' },
+    { key: 'problem_type',         value: buildProblemTypeValue(context) },
+    {
+      key: 'CustomColumn16sr',
+      value: 'N1 Service Desk',
+      valueClass: '',
+      valueCaption: 'N1 Service Desk',
+      keyCaption: 'Equipe solucionadora',
+    },
   ];
 }
 
@@ -132,6 +150,12 @@ async function createTicketFromIncident(teamSlug, incidentId, payload, headers, 
     throw buildError('Incidente não encontrado.', 404);
   }
 
+  if (ctx.related_ticket_id) {
+    throw buildError('Um ticket já foi vinculado a este incidente.', 409, {
+      related_ticket_id: String(ctx.related_ticket_id),
+    });
+  }
+
   if (ctx.incident_status === INCIDENT_STATUS.TICKET_CREATED) {
     throw buildError('Um ticket já foi criado para este incidente.', 409);
   }
@@ -189,6 +213,31 @@ async function createTicketFromIncident(teamSlug, incidentId, payload, headers, 
   );
 
   const createdTicketId = ticketResponse?.id ? Number(ticketResponse.id) : null;
+
+  if (!createdTicketId) {
+    throw buildError('ServiceDesk não retornou o identificador do ticket criado.', 502, ticketResponse);
+  }
+
+  const initialFlowState = buildInitialStateSeed({
+    ticket: {
+      id: createdTicketId,
+      title: ticketResponse?.title || enrichedContext.title || ctx.title || null,
+      status: ticketResponse?.status || 'NOVO',
+    },
+    routing: {
+      owner_slug: ctx.team_slug || String(teamSlug || '').trim() || null,
+      owner_name: ctx.team_name || null,
+    },
+  });
+
+  if (!initialFlowState) {
+    throw buildError('Não foi possível inicializar o fluxo do ticket criado.', 500, {
+      ticketResponse,
+      incidentId: Number(incidentId),
+    });
+  }
+
+  await ticketFlowRepository.upsertInitialStates([initialFlowState]);
 
   const updatedIncident = await applicationIncidentRepository.transitionIncident(
     String(teamSlug || '').trim(),
