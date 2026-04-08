@@ -173,25 +173,40 @@ async function assignIncidentToUser(ownerSlug, incidentId, payload) {
 async function transitionIncident(ownerSlug, incidentId, payload) {
   const result = await getPool().query(
     `
-      UPDATE application_incidents ai
-      SET incident_status = $3,
-          related_ticket_id = $4,
-          updated_at = NOW()
-      FROM ticket_owners towner
-      WHERE towner.id = ai.ticket_owner_id
-        AND towner.slug = $1
-        AND ai.id = $2
-        AND towner.is_active = TRUE
-      RETURNING
-        ai.id, ai.ticket_owner_id, ai.x_fapi_interaction_id,
-        ai.authorization_server, ai.client_id, ai.endpoint,
-        ai.method, ai.payload_request, ai.payload_response,
-        ai.occurred_at, ai.http_status_code, ai.incident_status,
-        ai.related_ticket_id, ai.assigned_to_user_id,
-        ai.created_at, ai.updated_at,
-        ai.title, ai.description, ai.tipo_cliente, ai.canal_jornada,
-        towner.slug AS team_slug,
-        towner.name AS team_name
+      WITH updated AS (
+        UPDATE application_incidents ai
+        SET incident_status = $3,
+            related_ticket_id = $4,
+            updated_at = NOW()
+        FROM ticket_owners towner
+        WHERE towner.id = ai.ticket_owner_id
+          AND towner.slug = $1
+          AND ai.id = $2
+          AND towner.is_active = TRUE
+        RETURNING
+          ai.id, ai.ticket_owner_id, ai.x_fapi_interaction_id,
+          ai.authorization_server, ai.client_id, ai.endpoint,
+          ai.method, ai.payload_request, ai.payload_response,
+          ai.occurred_at, ai.http_status_code, ai.incident_status,
+          ai.related_ticket_id, ai.assigned_to_user_id,
+          ai.created_at, ai.updated_at,
+          ai.title, ai.description, ai.tipo_cliente, ai.canal_jornada,
+          towner.slug AS team_slug,
+          towner.name AS team_name
+      )
+      SELECT
+        u.id, u.ticket_owner_id, u.x_fapi_interaction_id,
+        u.authorization_server, u.client_id, u.endpoint,
+        u.method, u.payload_request, u.payload_response,
+        u.occurred_at, u.http_status_code, u.incident_status,
+        u.related_ticket_id, u.assigned_to_user_id,
+        u.created_at, u.updated_at,
+        u.title, u.description, u.tipo_cliente, u.canal_jornada,
+        u.team_slug, u.team_name,
+        tu.name AS assigned_to_name,
+        tu.email AS assigned_to_email
+      FROM updated u
+      LEFT JOIN ticket_users tu ON tu.id = u.assigned_to_user_id
     `,
     [
       ownerSlug,

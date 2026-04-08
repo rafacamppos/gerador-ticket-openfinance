@@ -129,6 +129,16 @@ test('normalizeTimestamp accepts ISO string', () => {
   assert.strictEqual(normalizeTimestamp(ts), ts);
 });
 
+test('normalizeTimestamp preserves local datetime without timezone', () => {
+  const ts = '2026-04-08T10:30:00';
+  assert.strictEqual(normalizeTimestamp(ts), ts);
+});
+
+test('normalizeTimestamp normalizes local datetime with blank separator', () => {
+  const ts = '2026-04-08 10:30:00';
+  assert.strictEqual(normalizeTimestamp(ts), '2026-04-08T10:30:00');
+});
+
 test('normalizeTimestamp throws for invalid date', () => {
   assert.throws(() => normalizeTimestamp('not-a-date'), /valid timestamp/i);
 });

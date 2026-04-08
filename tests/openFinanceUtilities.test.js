@@ -125,6 +125,7 @@ test('application incident validation normalizes accepted values and rejects inv
   assert.strictEqual(normalizeRelatedTicketId('12345'), 12345);
   assert.strictEqual(normalizeRelatedTicketId('', { required: false }), null);
   assert.strictEqual(normalizeTimestamp('2026-03-30T12:00:00.000Z'), '2026-03-30T12:00:00.000Z');
+  assert.strictEqual(normalizeTimestamp('2026-03-30T09:00:00'), '2026-03-30T09:00:00');
   assert.deepStrictEqual(normalizeJsonPayload([{ code: '500' }], 'payload_request'), [{ code: '500' }]);
 
   assert.throws(() => normalizeUuid('invalid', 'field'), /valid UUID/i);

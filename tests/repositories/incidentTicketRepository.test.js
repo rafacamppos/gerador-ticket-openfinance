@@ -71,6 +71,28 @@ test('getIncidentTicketContext queries by owner slug and normalized incident id'
   }
 });
 
+test('getIncidentTicketContext selects created_at and updated_at fields', async () => {
+  let captured = null;
+  const pool = {
+    async query(text, values) {
+      captured = { text, values };
+      return {
+        rows: [{ id: 10 }],
+      };
+    },
+  };
+  const { repository, restore } = loadRepositoryWithPool(pool);
+
+  try {
+    await repository.getIncidentTicketContext('time-a', '10');
+
+    assert.match(captured.text, /ai\.created_at/i);
+    assert.match(captured.text, /ai\.updated_at/i);
+  } finally {
+    restore();
+  }
+});
+
 test('getTemplateFields queries ordered fields and returns rows', async () => {
   let captured = null;
   const pool = {

@@ -1,5 +1,6 @@
 const { buildError } = require('./openFinanceServiceErrors');
 const { INCIDENT_STATUS } = require('../contracts/applicationIncidentContract');
+const { SANTANDER_REQUESTER_NAME } = require('../contracts/ticketFlowContract');
 const incidentTicketRepository = require('../repositories/incidentTicketRepository');
 const applicationIncidentRepository = require('../repositories/applicationIncidentRepository');
 const ticketFlowRepository = require('../repositories/ticketFlowRepository');
@@ -140,7 +141,7 @@ async function getTicketPreview(teamSlug, incidentId) {
   };
 }
 
-async function createTicketFromIncident(teamSlug, incidentId, payload, headers, context) {
+async function createTicketFromIncident(teamSlug, incidentId, payload, headers, context, actor = {}) {
   const ctx = await incidentTicketRepository.getIncidentTicketContext(
     String(teamSlug || '').trim(),
     Number(incidentId)
@@ -154,6 +155,22 @@ async function createTicketFromIncident(teamSlug, incidentId, payload, headers, 
     throw buildError('Um ticket já foi vinculado a este incidente.', 409, {
       related_ticket_id: String(ctx.related_ticket_id),
     });
+  }
+
+  const authenticatedUserId = actor.authenticated_user_id
+    ? String(actor.authenticated_user_id)
+    : null;
+
+  if (!authenticatedUserId) {
+    throw buildError('Usuário autenticado não encontrado.', 401);
+  }
+
+  if (!ctx.assigned_to_user_id) {
+    throw buildError('O incidente precisa ser atribuído antes da criação do ticket.', 409);
+  }
+
+  if (String(ctx.assigned_to_user_id) !== authenticatedUserId) {
+    throw buildError('Somente o usuário responsável pelo incidente pode criar o ticket.', 403);
   }
 
   if (ctx.incident_status === INCIDENT_STATUS.TICKET_CREATED) {
@@ -228,6 +245,13 @@ async function createTicketFromIncident(teamSlug, incidentId, payload, headers, 
       owner_slug: ctx.team_slug || String(teamSlug || '').trim() || null,
       owner_name: ctx.team_name || null,
     },
+    actor: {
+      name: ctx.assigned_to_name || null,
+      email: ctx.assigned_to_email || null,
+    },
+    assignment: {
+      instituicao_requerente: SANTANDER_REQUESTER_NAME,
+    },
   });
 
   if (!initialFlowState) {
@@ -237,7 +261,7 @@ async function createTicketFromIncident(teamSlug, incidentId, payload, headers, 
     });
   }
 
-  await ticketFlowRepository.upsertInitialStates([initialFlowState]);
+  await ticketFlowRepository.upsertInitialStateWithEvent(initialFlowState);
 
   const updatedIncident = await applicationIncidentRepository.transitionIncident(
     String(teamSlug || '').trim(),

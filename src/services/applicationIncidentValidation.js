@@ -134,6 +134,27 @@ function normalizeTimestamp(value) {
     throw buildError('Field "occurred_at" is required.');
   }
 
+  if (typeof value === 'string') {
+    const normalizedValue = value.trim();
+
+    if (!normalizedValue) {
+      throw buildError('Field "occurred_at" is required.');
+    }
+
+    const date = new Date(normalizedValue);
+    if (Number.isNaN(date.getTime())) {
+      throw buildError('Field "occurred_at" must be a valid timestamp.');
+    }
+
+    // Preserve local datetimes without timezone so Postgres can interpret them
+    // using the configured database session timezone.
+    if (!/(Z|[+-]\d{2}:\d{2})$/i.test(normalizedValue)) {
+      return normalizedValue.replace(' ', 'T');
+    }
+
+    return normalizedValue;
+  }
+
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     throw buildError('Field "occurred_at" must be a valid timestamp.');

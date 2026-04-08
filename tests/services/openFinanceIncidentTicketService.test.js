@@ -51,6 +51,9 @@ const BASE_CONTEXT = {
   stage_name_version:    'Consents v3.0',
   tipo_cliente:          'PF',
   canal_jornada:         'App to app',
+  assigned_to_user_id:   42,
+  assigned_to_name:      'Angela Costa',
+  assigned_to_email:     'angela@example.com',
 };
 
 test('buildInfoPayload uses key (not field) for all entries', () => {
@@ -279,18 +282,100 @@ test('createTicketFromIncident returns 404 when incident is not found', async ()
   }
 });
 
+test('createTicketFromIncident returns 401 when authenticated user is missing', async () => {
+  const originalGetIncidentTicketContext = incidentTicketRepository.getIncidentTicketContext;
+  incidentTicketRepository.getIncidentTicketContext = async () => ({
+    ...BASE_CONTEXT,
+    id: 10,
+    incident_status: 'assigned',
+    assigned_to_user_id: 7,
+    template_id: 123328,
+    template_type: '1',
+  });
+
+  try {
+    await assert.rejects(
+      () => createTicketFromIncident('consentimentos-inbound', '10', {}, {}, {}, {}),
+      (error) => error.status === 401 && /Usuário autenticado não encontrado/i.test(error.message)
+    );
+  } finally {
+    incidentTicketRepository.getIncidentTicketContext = originalGetIncidentTicketContext;
+  }
+});
+
+test('createTicketFromIncident returns 409 when incident is not assigned yet', async () => {
+  const originalGetIncidentTicketContext = incidentTicketRepository.getIncidentTicketContext;
+  incidentTicketRepository.getIncidentTicketContext = async () => ({
+    ...BASE_CONTEXT,
+    id: 10,
+    incident_status: 'new',
+    assigned_to_user_id: null,
+    template_id: 123328,
+    template_type: '1',
+  });
+
+  try {
+    await assert.rejects(
+      () => createTicketFromIncident(
+        'consentimentos-inbound',
+        '10',
+        {},
+        {},
+        {},
+        { authenticated_user_id: '7' }
+      ),
+      (error) =>
+        error.status === 409 &&
+        /precisa ser atribuído antes da criação do ticket/i.test(error.message)
+    );
+  } finally {
+    incidentTicketRepository.getIncidentTicketContext = originalGetIncidentTicketContext;
+  }
+});
+
+test('createTicketFromIncident returns 403 when incident is assigned to another user', async () => {
+  const originalGetIncidentTicketContext = incidentTicketRepository.getIncidentTicketContext;
+  incidentTicketRepository.getIncidentTicketContext = async () => ({
+    ...BASE_CONTEXT,
+    id: 10,
+    incident_status: 'assigned',
+    assigned_to_user_id: 9,
+    template_id: 123328,
+    template_type: '1',
+  });
+
+  try {
+    await assert.rejects(
+      () => createTicketFromIncident(
+        'consentimentos-inbound',
+        '10',
+        {},
+        {},
+        {},
+        { authenticated_user_id: '7' }
+      ),
+      (error) =>
+        error.status === 403 &&
+        /Somente o usuário responsável pelo incidente pode criar o ticket/i.test(error.message)
+    );
+  } finally {
+    incidentTicketRepository.getIncidentTicketContext = originalGetIncidentTicketContext;
+  }
+});
+
 test('createTicketFromIncident returns 409 when incident already has a created ticket', async () => {
   const originalGetIncidentTicketContext = incidentTicketRepository.getIncidentTicketContext;
   incidentTicketRepository.getIncidentTicketContext = async () => ({
     ...BASE_CONTEXT,
     id: 10,
     incident_status: 'ticket_created',
+    assigned_to_user_id: 7,
     template_id: 123328,
   });
 
   try {
     await assert.rejects(
-      () => createTicketFromIncident('consentimentos-inbound', '10', {}, {}, {}),
+      () => createTicketFromIncident('consentimentos-inbound', '10', {}, {}, {}, { authenticated_user_id: '7' }),
       /já foi criado/i
     );
   } finally {
@@ -304,6 +389,7 @@ test('createTicketFromIncident returns 409 when incident already has related tic
     ...BASE_CONTEXT,
     id: 10,
     incident_status: 'assigned',
+    assigned_to_user_id: 7,
     related_ticket_id: 98765,
     template_id: 123328,
     template_type: '1',
@@ -311,7 +397,7 @@ test('createTicketFromIncident returns 409 when incident already has related tic
 
   try {
     await assert.rejects(
-      () => createTicketFromIncident('consentimentos-inbound', '10', {}, {}, {}),
+      () => createTicketFromIncident('consentimentos-inbound', '10', {}, {}, {}, { authenticated_user_id: '7' }),
       (error) => {
         assert.strictEqual(error.status, 409);
         assert.deepStrictEqual(error.details, { related_ticket_id: '98765' });
@@ -329,12 +415,13 @@ test('createTicketFromIncident returns 422 when incident has no template', async
     ...BASE_CONTEXT,
     id: 10,
     incident_status: 'assigned',
+    assigned_to_user_id: 7,
     template_id: null,
   });
 
   try {
     await assert.rejects(
-      () => createTicketFromIncident('consentimentos-inbound', '10', {}, {}, {}),
+      () => createTicketFromIncident('consentimentos-inbound', '10', {}, {}, {}, { authenticated_user_id: '7' }),
       /Nenhum template de ticket encontrado/i
     );
   } finally {
@@ -350,6 +437,7 @@ test('createTicketFromIncident returns 422 when template has no fields', async (
     ...BASE_CONTEXT,
     id: 10,
     incident_status: 'assigned',
+    assigned_to_user_id: 7,
     template_id: 123328,
     template_type: '1',
   });
@@ -357,7 +445,7 @@ test('createTicketFromIncident returns 422 when template has no fields', async (
 
   try {
     await assert.rejects(
-      () => createTicketFromIncident('consentimentos-inbound', '10', {}, {}, {}),
+      () => createTicketFromIncident('consentimentos-inbound', '10', {}, {}, {}, { authenticated_user_id: '7' }),
       /Nenhum campo de template encontrado/i
     );
   } finally {
@@ -375,6 +463,7 @@ test('createTicketFromIncident returns 422 when required fields are missing in a
     id: 10,
     tipo_cliente: '',
     incident_status: 'assigned',
+    assigned_to_user_id: 7,
     template_id: 123328,
     template_type: '1',
   });
@@ -382,7 +471,7 @@ test('createTicketFromIncident returns 422 when required fields are missing in a
 
   try {
     await assert.rejects(
-      () => createTicketFromIncident('consentimentos-inbound', '10', {}, {}, {}),
+      () => createTicketFromIncident('consentimentos-inbound', '10', {}, {}, {}, { authenticated_user_id: '7' }),
       /Campos obrigatórios não preenchidos: Tipo do Cliente/i
     );
   } finally {
@@ -396,14 +485,15 @@ test('createTicketFromIncident creates ticket with automatic template payload an
   const originalGetTemplateFields = incidentTicketRepository.getTemplateFields;
   const originalPostJson = openFinanceDeskClient.postJson;
   const originalTransitionIncident = applicationIncidentRepository.transitionIncident;
-  const originalUpsertInitialStates = ticketFlowRepository.upsertInitialStates;
+  const originalUpsertInitialStateWithEvent = ticketFlowRepository.upsertInitialStateWithEvent;
   let captured = null;
-  let capturedStates = null;
+  let capturedState = null;
 
   incidentTicketRepository.getIncidentTicketContext = async () => ({
     ...BASE_CONTEXT,
     id: 10,
     incident_status: 'assigned',
+    assigned_to_user_id: 7,
     template_id: 123328,
     template_type: '1',
     team_slug: 'consentimentos-inbound',
@@ -418,9 +508,9 @@ test('createTicketFromIncident creates ticket with automatic template payload an
     captured = { path, body, query, headers, context };
     return { id: 98765, protocol: 'SR-98765' };
   };
-  ticketFlowRepository.upsertInitialStates = async (states) => {
-    capturedStates = states;
-    return states;
+  ticketFlowRepository.upsertInitialStateWithEvent = async (state) => {
+    capturedState = state;
+    return state;
   };
   applicationIncidentRepository.transitionIncident = async (_teamSlug, _incidentId, payload) => ({
     id: 10,
@@ -451,6 +541,9 @@ test('createTicketFromIncident creates ticket with automatic template payload an
       },
       {
         environmentBaseUrl: 'https://sandbox.example.com',
+      },
+      {
+        authenticated_user_id: '7',
       }
     );
 
@@ -491,27 +584,27 @@ test('createTicketFromIncident creates ticket with automatic template payload an
     assert.strictEqual(response.ticket.id, 98765);
     assert.strictEqual(response.incident.incident_status, 'ticket_created');
     assert.strictEqual(response.incident.related_ticket_id, '98765');
-    assert.deepStrictEqual(capturedStates, [
-      {
-        ticket_id: '98765',
-        ticket_title: 'Titulo atualizado',
-        ticket_status: 'NOVO',
-        requester_company_name: null,
-        requester_company_key: null,
-        current_stage: 'routed_to_owner',
-        current_owner_slug: 'consentimentos-inbound',
-        assigned_owner_slug: 'consentimentos-inbound',
-        accepted_by_team: false,
-        responded_by_team: false,
-        returned_to_su: false,
-      },
-    ]);
+    assert.deepStrictEqual(capturedState, {
+      ticket_id: '98765',
+      ticket_title: 'Titulo atualizado',
+      ticket_status: 'NOVO',
+      requester_company_name: 'BCO SANTANDER (BRASIL) S.A.',
+      requester_company_key: 'bco_santander_brasil_s_a',
+      current_stage: 'accepted_by_owner',
+      current_owner_slug: 'consentimentos-inbound',
+      assigned_owner_slug: 'consentimentos-inbound',
+      accepted_by_team: true,
+      responded_by_team: false,
+      returned_to_su: false,
+      actor_name: 'Angela Costa',
+      actor_email: 'angela@example.com',
+    });
   } finally {
     incidentTicketRepository.getIncidentTicketContext = originalGetIncidentTicketContext;
     incidentTicketRepository.getTemplateFields = originalGetTemplateFields;
     openFinanceDeskClient.postJson = originalPostJson;
     applicationIncidentRepository.transitionIncident = originalTransitionIncident;
-    ticketFlowRepository.upsertInitialStates = originalUpsertInitialStates;
+    ticketFlowRepository.upsertInitialStateWithEvent = originalUpsertInitialStateWithEvent;
   }
 });
 
@@ -527,6 +620,7 @@ test('createTicketFromIncident returns 502 when ServiceDesk does not return tick
     ...BASE_CONTEXT,
     id: 10,
     incident_status: 'assigned',
+    assigned_to_user_id: 7,
     template_id: 123328,
     template_type: '1',
   });
@@ -560,7 +654,8 @@ test('createTicketFromIncident returns 502 when ServiceDesk does not return tick
           ],
         },
         {},
-        {}
+        {},
+        { authenticated_user_id: '7' }
       ),
       /não retornou o identificador do ticket criado/i
     );

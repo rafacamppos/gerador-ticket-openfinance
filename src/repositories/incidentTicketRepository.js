@@ -15,6 +15,8 @@ async function getIncidentTicketContext(ownerSlug, incidentId) {
         ai.payload_response,
         ai.occurred_at,
         ai.http_status_code,
+        ai.created_at,
+        ai.updated_at,
         ai.title,
         ai.description,
         ai.tipo_cliente,

@@ -1,3 +1,5 @@
+const SANTANDER_REQUESTER_NAME = 'BCO SANTANDER (BRASIL) S.A.';
+
 const TICKET_FLOW_STAGES = {
   TRIAGE_SU: 'triage_su',
   ROUTED_TO_OWNER: 'routed_to_owner',
@@ -45,6 +47,7 @@ function getTicketFlowActionLabel(action) {
 }
 
 module.exports = {
+  SANTANDER_REQUESTER_NAME,
   TICKET_FLOW_STAGES,
   TICKET_FLOW_ACTIONS,
   getTicketFlowStageLabel,

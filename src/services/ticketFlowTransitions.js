@@ -18,29 +18,33 @@ function buildInitialStateSeed(ticket = {}) {
   const ticketStatus = ticket?.ticket?.status || null;
   const normalizedTicketStatus = String(ticketStatus || '').trim().toUpperCase();
   const ownerSlug = ticket?.routing?.owner_slug || null;
-  const ownerName = ticket?.routing?.owner_name || null;
-  const routedToOwner = ownerSlug && ownerSlug !== SU_OWNER.slug;
+  const actorName = ticket?.actor?.name || null;
+  const actorEmail = ticket?.actor?.email || null;
   const requesterCompanyName = ticket?.assignment?.instituicao_requerente || null;
   const isCanceled = normalizedTicketStatus === 'CANCELADO';
   const isClosed = normalizedTicketStatus === 'ATENDIMENTO ENCERRADO';
+  const createdByOwner = ownerSlug && ownerSlug !== SU_OWNER.slug && actorName;
+  const routedToOwner = ownerSlug && ownerSlug !== SU_OWNER.slug && !createdByOwner;
 
-  let currentStage = routedToOwner
-    ? TICKET_FLOW_STAGES.ROUTED_TO_OWNER
-    : TICKET_FLOW_STAGES.TRIAGE_SU;
+  let currentStage;
   let acceptedByTeam = false;
   let respondedByTeam = false;
   let returnedToSu = false;
-  let lastAction = null;
 
   if (isClosed) {
     currentStage = TICKET_FLOW_STAGES.CLOSED_CANCELED;
     acceptedByTeam = true;
     respondedByTeam = true;
-    lastAction = TICKET_FLOW_ACTIONS.CLOSED;
   } else if (isCanceled) {
     currentStage = TICKET_FLOW_STAGES.CLOSED_CANCELED;
     returnedToSu = true;
-    lastAction = TICKET_FLOW_ACTIONS.CANCELED;
+  } else if (createdByOwner) {
+    currentStage = TICKET_FLOW_STAGES.ACCEPTED_BY_OWNER;
+    acceptedByTeam = true;
+  } else if (routedToOwner) {
+    currentStage = TICKET_FLOW_STAGES.ROUTED_TO_OWNER;
+  } else {
+    currentStage = TICKET_FLOW_STAGES.TRIAGE_SU;
   }
 
   return {
@@ -51,10 +55,12 @@ function buildInitialStateSeed(ticket = {}) {
     requester_company_key: normalizeRequesterCompanyKey(requesterCompanyName),
     current_stage: currentStage,
     current_owner_slug: ownerSlug,
-    assigned_owner_slug: routedToOwner ? ownerSlug : null,
+    assigned_owner_slug: (createdByOwner || routedToOwner) ? ownerSlug : null,
     accepted_by_team: acceptedByTeam,
     responded_by_team: respondedByTeam,
     returned_to_su: returnedToSu,
+    actor_name: actorName,
+    actor_email: actorEmail,
   };
 }
 

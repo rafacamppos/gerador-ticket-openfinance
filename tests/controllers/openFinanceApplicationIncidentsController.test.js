@@ -3,6 +3,7 @@ const assert = require('node:assert');
 
 const controller = require('../../src/controllers/openFinanceApplicationIncidentsController');
 const service = require('../../src/services/openFinanceApplicationIncidentsService');
+const incidentTicketService = require('../../src/services/openFinanceIncidentTicketService');
 
 function createMockResponse() {
   return {
@@ -570,6 +571,74 @@ test('transitionIncident forwards service errors to next without writing respons
     assert.strictEqual(res.body, null);
   } finally {
     service.transitionApplicationIncident = originalTransitionApplicationIncident;
+  }
+});
+
+test('createTicketFromIncident forwards authenticated portal user to incident ticket service', async () => {
+  const originalCreateTicketFromIncident = incidentTicketService.createTicketFromIncident;
+  let captured = null;
+
+  incidentTicketService.createTicketFromIncident = async (
+    teamSlug,
+    incidentId,
+    payload,
+    _headers,
+    _context,
+    actor
+  ) => {
+    captured = { teamSlug, incidentId, payload, actor };
+    return {
+      incident: { id: incidentId, team_slug: teamSlug, related_ticket_id: '999' },
+      ticket_id: '999',
+      ticket: { id: 999 },
+    };
+  };
+
+  const req = {
+    params: {
+      teamSlug: 'consentimentos-inbound',
+      incidentId: '33',
+    },
+    body: {
+      title: 'Falha',
+    },
+    headers: {},
+    session: {
+      portalUser: {
+        id: '10',
+        email: 'rafael.campos@f1rst.com.br',
+      },
+      openFinanceSession: {
+        cookie: 'JSESSIONID=abc',
+      },
+    },
+  };
+  const res = createMockResponse();
+
+  try {
+    await controller.createTicketFromIncident(req, res, (error) => {
+      throw error;
+    });
+
+    assert.strictEqual(res.statusCode, 201);
+    assert.deepStrictEqual(captured, {
+      teamSlug: 'consentimentos-inbound',
+      incidentId: '33',
+      payload: {
+        title: 'Falha',
+      },
+      actor: {
+        authenticated_user_id: '10',
+        authenticated_user_email: 'rafael.campos@f1rst.com.br',
+      },
+    });
+    assert.deepStrictEqual(res.body, {
+      incident: { id: '33', team_slug: 'consentimentos-inbound', related_ticket_id: '999' },
+      ticket_id: '999',
+      ticket: { id: 999 },
+    });
+  } finally {
+    incidentTicketService.createTicketFromIncident = originalCreateTicketFromIncident;
   }
 });
 

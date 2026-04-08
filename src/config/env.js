@@ -44,6 +44,7 @@ module.exports = {
   databaseName: process.env.DATABASE_NAME || 'gerador_ticket_openfinance',
   databaseUser: process.env.DATABASE_USER || 'gerador_ticket_user',
   databasePassword: process.env.DATABASE_PASSWORD || 'gerador_ticket_password',
+  databaseTimezone: process.env.DATABASE_TIMEZONE || 'America/Sao_Paulo',
   openFinanceApiBaseUrl: (
     process.env.OPEN_FINANCE_API_BASE_URL ||
     'https://servicedesk.openfinancebrasil.org.br'

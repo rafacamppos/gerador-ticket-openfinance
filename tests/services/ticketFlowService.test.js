@@ -34,6 +34,8 @@ test('buildInitialStateSeed creates routed state when ticket is classified to an
     accepted_by_team: false,
     responded_by_team: false,
     returned_to_su: false,
+    actor_name: null,
+    actor_email: null,
   });
 });
 

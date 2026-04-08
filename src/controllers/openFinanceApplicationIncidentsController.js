@@ -84,13 +84,18 @@ async function getTicketPreview(req, res, next) {
 
 async function createTicketFromIncident(req, res, next) {
   try {
+    const portalUser = req.session?.portalUser || null;
     const response = await executeWithManagedSession(req, (headers, context) =>
       openFinanceIncidentTicketService.createTicketFromIncident(
         req.params.teamSlug,
         req.params.incidentId,
         req.body,
         headers,
-        context
+        context,
+        {
+          authenticated_user_id: portalUser?.id || null,
+          authenticated_user_email: portalUser?.email || null,
+        }
       )
     );
     res.status(201).json(response);

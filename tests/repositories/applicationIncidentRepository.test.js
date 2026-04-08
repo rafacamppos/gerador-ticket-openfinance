@@ -202,3 +202,37 @@ test('transitionIncident forwards related ticket id and returns null when row is
     restore();
   }
 });
+
+test('transitionIncident returns assigned user fields from joined ticket user', async () => {
+  const pool = {
+    async query() {
+      return {
+        rows: [
+          {
+            id: 33,
+            assigned_to_user_id: 8,
+            assigned_to_name: 'Rafael de Campos',
+            assigned_to_email: 'rafael.campos@f1rst.com.br',
+          },
+        ],
+      };
+    },
+  };
+  const { repository, restore } = loadRepositoryWithPool(pool);
+
+  try {
+    const response = await repository.transitionIncident('time-a', '33', {
+      incident_status: 'ticket_created',
+      related_ticket_id: 123456,
+    });
+
+    assert.deepStrictEqual(response, {
+      id: 33,
+      assigned_to_user_id: 8,
+      assigned_to_name: 'Rafael de Campos',
+      assigned_to_email: 'rafael.campos@f1rst.com.br',
+    });
+  } finally {
+    restore();
+  }
+});

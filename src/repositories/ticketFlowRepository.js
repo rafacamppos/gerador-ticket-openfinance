@@ -8,6 +8,7 @@ const {
   insertEvent,
   updateState,
 } = require('./ticketFlowTransitionRepository');
+const { TICKET_FLOW_ACTIONS } = require('../contracts/ticketFlowContract');
 
 async function upsertInitialStates(states = []) {
   if (!Array.isArray(states) || !states.length) {
@@ -101,6 +102,42 @@ async function listEventsByTicketId(ticketId) {
   return result.rows;
 }
 
+async function upsertInitialStateWithEvent(state) {
+  const client = await getPool().connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const query = buildUpsertInitialStatesQuery([state]);
+    const upsertResult = await client.query(query.text, query.values);
+    const upsertedState = upsertResult.rows[0];
+
+    if (state.actor_name || state.actor_email) {
+      await insertEvent(
+        client,
+        Number(state.ticket_id),
+        {
+          action: TICKET_FLOW_ACTIONS.ACCEPT,
+          actor_name: state.actor_name || null,
+          actor_email: state.actor_email || null,
+          note: null,
+          payload_json: {},
+        },
+        { current_stage: null, current_owner_slug: null },
+        upsertedState
+      );
+    }
+
+    await client.query('COMMIT');
+    return upsertedState;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 async function transitionState(ticketId, transition) {
   const client = await getPool().connect();
 
@@ -128,4 +165,5 @@ module.exports = {
   listStates,
   transitionState,
   upsertInitialStates,
+  upsertInitialStateWithEvent,
 };
