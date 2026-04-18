@@ -9,6 +9,12 @@ dotenv.config({ path: projectEnvPath });
 const DEFAULT_SESSION_SECRET = 'open-finance-local-session-secret';
 const isProduction = process.env.NODE_ENV === 'production';
 
+const VALID_APP_ENVS = ['production', 'sandbox', 'development'];
+const appEnv = process.env.APP_ENV || 'development';
+if (!VALID_APP_ENVS.includes(appEnv)) {
+  throw new Error(`[config] APP_ENV must be one of: ${VALID_APP_ENVS.join(', ')}. Got: "${appEnv}"`);
+}
+
 if (!process.env.SESSION_SECRET) {
   if (isProduction) {
     throw new Error('[config] SESSION_SECRET is required in production. Set a secure random value.');
@@ -26,6 +32,7 @@ if (isProduction && !process.env.OPEN_FINANCE_PASSWORD) {
 }
 
 module.exports = {
+  appEnv,
   port: Number(process.env.PORT) || 3000,
   sessionSecret: process.env.SESSION_SECRET || DEFAULT_SESSION_SECRET,
   sessionTtlSeconds: Number(process.env.SESSION_TTL_SECONDS) || 43200,

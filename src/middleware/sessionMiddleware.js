@@ -2,13 +2,15 @@ const crypto = require('crypto');
 const session = require('express-session');
 const { RedisStore } = require('connect-redis');
 const {
+  appEnv,
   sessionSecret,
   sessionTtlSeconds,
   sessionCookieSecure,
 } = require('../config/env');
 const { getRedisClient } = require('../clients/redisClient');
 
-const SESSION_COOKIE_NAME = 'open-finance.sid';
+const SESSION_COOKIE_NAME = `open-finance-${appEnv}.sid`;
+const SESSION_REDIS_PREFIX = `open-finance:sess:${appEnv}:`;
 
 function parseCookies(cookieHeader = '') {
   return cookieHeader
@@ -57,7 +59,7 @@ function createRedisSessionStore({ redisClient = getRedisClient() } = {}) {
   return redisClient.connect().then(() =>
     new RedisStore({
       client: redisClient,
-      prefix: 'open-finance:sess:',
+      prefix: SESSION_REDIS_PREFIX,
       ttl: sessionTtlSeconds,
     })
   );
@@ -91,6 +93,7 @@ async function createDefaultSessionMiddleware() {
 
 module.exports = {
   SESSION_COOKIE_NAME,
+  SESSION_REDIS_PREFIX,
   parseCookies,
   createInMemoryTestSessionMiddleware,
   createRedisSessionStore,
