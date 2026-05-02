@@ -42,6 +42,9 @@ test('reportApplicationIncident validates, resolves owner and persists incident'
         occurred_at: '2026-03-29T10:15:00.000Z',
         http_status_code: 500,
         description: 'Erro ao processar consentimento',
+        category_name: 'Conformidade',
+        sub_category_name: 'Validação',
+        third_level_category_name: 'Validação de Dados',
       }
     );
 
@@ -92,8 +95,11 @@ test('reportApplicationIncident rejects invalid payload fields', async () => {
         occurred_at: 'invalid-date',
         http_status_code: 999,
         description: '',
+        category_name: '',
+        sub_category_name: '',
+        third_level_category_name: '',
       }),
-    /teamSlug|x_fapi_interaction_id|authorization_server|client_id|endpoint|method|payload_request|payload_response|occurred_at|http_status_code|description/i
+    /teamSlug|x_fapi_interaction_id|authorization_server|client_id|endpoint|method|payload_request|payload_response|occurred_at|http_status_code|description|category_name|sub_category_name|third_level_category_name/i
   );
 });
 
@@ -222,6 +228,9 @@ test('reportApplicationIncident throws 404 when owner is not found', async () =>
         occurred_at: '2026-03-29T10:15:00.000Z',
         http_status_code: 500,
         description: 'desc',
+        category_name: 'Conformidade',
+        sub_category_name: 'Validação',
+        third_level_category_name: 'Validação de Dados',
       }),
       /Equipe não encontrada/i
     );

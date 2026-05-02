@@ -28,7 +28,7 @@ async function getIncidentTicketContext(ownerSlug, incidentId) {
         towner.name  AS team_name,
         tu.name      AS assigned_to_name,
         tu.email     AS assigned_to_email,
-        toe.category_template_id,
+        ct.id        AS category_template_id,
         ct.category_name,
         ct.sub_category_name,
         ct.third_level_category_name,
@@ -44,13 +44,10 @@ async function getIncidentTicketContext(ownerSlug, incidentId) {
         ON towner.id = ai.ticket_owner_id
       LEFT JOIN ticket_users tu
         ON tu.id = ai.assigned_to_user_id
-      LEFT JOIN ticket_owner_endpoints toe
-        ON toe.ticket_owner_id = ai.ticket_owner_id
-        AND toe.endpoint = ai.endpoint
-        AND toe.method   = ai.method
-        AND toe.is_active = TRUE
       LEFT JOIN category_templates ct
-        ON ct.id = toe.category_template_id
+        ON ct.category_name = ai.category_name
+        AND ct.sub_category_name = ai.sub_category_name
+        AND ct.third_level_category_name = ai.third_level_category_name
       LEFT JOIN endpoints ep
         ON ep.endpoint_url = ai.endpoint
         AND ep.http_method = ai.method

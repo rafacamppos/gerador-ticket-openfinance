@@ -17,9 +17,12 @@ async function createIncident(payload) {
         title,
         description,
         tipo_cliente,
-        canal_jornada
+        canal_jornada,
+        category_name,
+        sub_category_name,
+        third_level_category_name
       )
-      VALUES ($1, $2::uuid, $3::uuid, $4::uuid, $5, $6, $7::jsonb, $8::jsonb, $9::timestamptz, $10, $11, $12, $13, $14)
+      VALUES ($1, $2::uuid, $3::uuid, $4::uuid, $5, $6, $7::jsonb, $8::jsonb, $9::timestamptz, $10, $11, $12, $13, $14, $15, $16, $17)
       RETURNING *
     `,
     [
@@ -37,6 +40,9 @@ async function createIncident(payload) {
       payload.description,
       payload.tipo_cliente,
       payload.canal_jornada,
+      payload.category_name || null,
+      payload.sub_category_name || null,
+      payload.third_level_category_name || null,
     ]
   );
 

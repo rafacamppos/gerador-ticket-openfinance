@@ -194,9 +194,54 @@ function normalizeRelatedTicketId(value, { required = false } = {}) {
   return normalizedValue;
 }
 
+function normalizeCategoryName(value) {
+  const normalizedValue = String(value || '').trim();
+
+  if (!normalizedValue) {
+    throw buildError('Field "category_name" is required.');
+  }
+
+  if (normalizedValue.length > 255) {
+    throw buildError('Field "category_name" must be at most 255 characters.');
+  }
+
+  return normalizedValue;
+}
+
+function normalizeSubCategoryName(value) {
+  const normalizedValue = String(value || '').trim();
+
+  if (!normalizedValue) {
+    throw buildError('Field "sub_category_name" is required.');
+  }
+
+  if (normalizedValue.length > 255) {
+    throw buildError('Field "sub_category_name" must be at most 255 characters.');
+  }
+
+  return normalizedValue;
+}
+
+function normalizeThirdLevelCategoryName(value) {
+  const normalizedValue = String(value || '').trim();
+
+  if (!normalizedValue) {
+    throw buildError('Field "third_level_category_name" is required.');
+  }
+
+  if (normalizedValue.length > 255) {
+    throw buildError('Field "third_level_category_name" must be at most 255 characters.');
+  }
+
+  return normalizedValue;
+}
+
 module.exports = {
   normalizeCanalJornada,
+  normalizeCategoryName,
   normalizeDescription,
+  normalizeSubCategoryName,
+  normalizeThirdLevelCategoryName,
   normalizeTitle,
   normalizeTipoCliente,
   normalizeEndpoint,

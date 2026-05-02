@@ -19,6 +19,9 @@ CREATE TABLE IF NOT EXISTS application_incidents (
   description VARCHAR(1024) NOT NULL,
   tipo_cliente VARCHAR(32) NOT NULL,
   canal_jornada VARCHAR(64) NOT NULL DEFAULT 'Não se aplica',
+  category_name VARCHAR(255),
+  sub_category_name VARCHAR(255),
+  third_level_category_name VARCHAR(255),
   CONSTRAINT chk_application_incidents_tipo_cliente
     CHECK (tipo_cliente IN ('PF', 'PJ')),
   CONSTRAINT chk_application_incidents_canal_jornada
@@ -36,3 +39,7 @@ CREATE INDEX IF NOT EXISTS idx_application_incidents_owner_date
 
 CREATE INDEX IF NOT EXISTS idx_application_incidents_fapi_interaction
   ON application_incidents (x_fapi_interaction_id);
+
+CREATE INDEX IF NOT EXISTS idx_application_incidents_category_lookup
+  ON application_incidents (category_name, sub_category_name, third_level_category_name)
+  WHERE category_name IS NOT NULL AND sub_category_name IS NOT NULL AND third_level_category_name IS NOT NULL;
