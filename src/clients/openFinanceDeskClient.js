@@ -1,7 +1,19 @@
 const { openFinanceApiBaseUrl } = require('../config/env');
+const logger = require('../utils/logger');
 
 function getServiceDeskBaseUrl(context = {}) {
   return String(context.environmentBaseUrl || openFinanceApiBaseUrl || '').replace(/\/+$/, '');
+}
+
+function getEnvironmentInfo(context = {}) {
+  const baseUrl = getServiceDeskBaseUrl(context);
+  if (baseUrl.includes('servicedesk.openfinancebrasil.org.br')) {
+    return { env: 'PRODUCTION', baseUrl };
+  }
+  if (baseUrl.includes('sandbox') || baseUrl.includes('homolog') || baseUrl.includes('staging')) {
+    return { env: 'SANDBOX/STAGING', baseUrl };
+  }
+  return { env: 'UNKNOWN', baseUrl };
 }
 
 function getApiBaseUrl(context = {}) {
@@ -86,29 +98,83 @@ async function handleResponseWithMeta(response) {
 }
 
 async function getJson(path, query, headers, context) {
-  const response = await fetch(createUrl(path, query, context), {
+  const url = createUrl(path, query, context);
+  const envInfo = getEnvironmentInfo(context);
+  const startTime = Date.now();
+
+  logger.debug('Open Finance API Request', {
+    method: 'GET',
+    endpoint: url.toString(),
+    environment: envInfo.env,
+    baseUrl: envInfo.baseUrl,
+    path,
+  });
+
+  const response = await fetch(url, {
     method: 'GET',
     headers: createForwardHeaders(headers),
+  });
+
+  const duration = Date.now() - startTime;
+  logger.debug('Open Finance API Response', {
+    method: 'GET',
+    endpoint: url.toString(),
+    environment: envInfo.env,
+    statusCode: response.status,
+    durationMs: duration,
   });
 
   return handleResponse(response);
 }
 
 async function postJson(path, body, query, headers, context) {
-  const response = await fetch(createUrl(path, query, context), {
+  const url = createUrl(path, query, context);
+  const envInfo = getEnvironmentInfo(context);
+  const startTime = Date.now();
+
+  logger.debug('Open Finance API Request', {
+    method: 'POST',
+    endpoint: url.toString(),
+    environment: envInfo.env,
+    baseUrl: envInfo.baseUrl,
+    path,
+  });
+
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
       ...createForwardHeaders(headers),
     },
     body: JSON.stringify(body),
+  });
+
+  const duration = Date.now() - startTime;
+  logger.debug('Open Finance API Response', {
+    method: 'POST',
+    endpoint: url.toString(),
+    environment: envInfo.env,
+    statusCode: response.status,
+    durationMs: duration,
   });
 
   return handleResponse(response);
 }
 
 async function postJsonWithMeta(path, body, query, headers, context) {
-  const response = await fetch(createUrl(path, query, context), {
+  const url = createUrl(path, query, context);
+  const envInfo = getEnvironmentInfo(context);
+  const startTime = Date.now();
+
+  logger.debug('Open Finance API Request', {
+    method: 'POST',
+    endpoint: url.toString(),
+    environment: envInfo.env,
+    baseUrl: envInfo.baseUrl,
+    path,
+  });
+
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -117,11 +183,32 @@ async function postJsonWithMeta(path, body, query, headers, context) {
     body: JSON.stringify(body),
   });
 
+  const duration = Date.now() - startTime;
+  logger.debug('Open Finance API Response', {
+    method: 'POST',
+    endpoint: url.toString(),
+    environment: envInfo.env,
+    statusCode: response.status,
+    durationMs: duration,
+  });
+
   return handleResponseWithMeta(response);
 }
 
 async function putJson(path, body, headers, context) {
-  const response = await fetch(createUrl(path, undefined, context), {
+  const url = createUrl(path, undefined, context);
+  const envInfo = getEnvironmentInfo(context);
+  const startTime = Date.now();
+
+  logger.debug('Open Finance API Request', {
+    method: 'PUT',
+    endpoint: url.toString(),
+    environment: envInfo.env,
+    baseUrl: envInfo.baseUrl,
+    path,
+  });
+
+  const response = await fetch(url, {
     method: 'PUT',
     headers: {
       'content-type': 'application/json',
@@ -130,10 +217,33 @@ async function putJson(path, body, headers, context) {
     body: JSON.stringify(body),
   });
 
+  const duration = Date.now() - startTime;
+  logger.debug('Open Finance API Response', {
+    method: 'PUT',
+    endpoint: url.toString(),
+    environment: envInfo.env,
+    statusCode: response.status,
+    durationMs: duration,
+  });
+
   return handleResponse(response);
 }
 
 async function postMultipart(path, file, headers, context) {
+  const url = createUrl(path, undefined, context);
+  const envInfo = getEnvironmentInfo(context);
+  const startTime = Date.now();
+
+  logger.debug('Open Finance API Request', {
+    method: 'POST',
+    endpoint: url.toString(),
+    environment: envInfo.env,
+    baseUrl: envInfo.baseUrl,
+    path,
+    contentType: 'multipart/form-data',
+    fileName: file.originalname || 'attachment',
+  });
+
   const formData = new FormData();
   formData.append(
     'file',
@@ -141,22 +251,52 @@ async function postMultipart(path, file, headers, context) {
     file.originalname || 'attachment'
   );
 
-  const response = await fetch(createUrl(path, undefined, context), {
+  const response = await fetch(url, {
     method: 'POST',
     headers: createForwardHeaders(headers),
     body: formData,
+  });
+
+  const duration = Date.now() - startTime;
+  logger.debug('Open Finance API Response', {
+    method: 'POST',
+    endpoint: url.toString(),
+    environment: envInfo.env,
+    statusCode: response.status,
+    durationMs: duration,
   });
 
   return handleResponse(response);
 }
 
 async function downloadBinary(url, headers = {}) {
+  const startTime = Date.now();
+  const envInfo = url.includes('servicedesk.openfinancebrasil.org.br')
+    ? { env: 'PRODUCTION', baseUrl: 'https://servicedesk.openfinancebrasil.org.br' }
+    : { env: 'UNKNOWN', baseUrl: 'unknown' };
+
+  logger.debug('Open Finance Binary Download Request', {
+    method: 'GET',
+    url,
+    environment: envInfo.env,
+  });
+
   const response = await fetch(url, {
     method: 'GET',
     headers: createForwardHeaders(headers),
   });
 
+  const duration = Date.now() - startTime;
+
   if (response.url && /\/Login\.jsp/i.test(response.url)) {
+    logger.debug('Open Finance Binary Download Response', {
+      method: 'GET',
+      url,
+      environment: envInfo.env,
+      statusCode: response.status,
+      redirectedToLogin: true,
+      durationMs: duration,
+    });
     throw buildError('Open Finance upstream request failed.', 401, {
       redirectedToLogin: true,
       url: response.url,
@@ -164,9 +304,24 @@ async function downloadBinary(url, headers = {}) {
   }
 
   if (!response.ok) {
+    logger.debug('Open Finance Binary Download Response', {
+      method: 'GET',
+      url,
+      environment: envInfo.env,
+      statusCode: response.status,
+      durationMs: duration,
+    });
     const payload = await response.text();
     throw buildError('Open Finance upstream request failed.', response.status, payload);
   }
+
+  logger.debug('Open Finance Binary Download Response', {
+    method: 'GET',
+    url,
+    environment: envInfo.env,
+    statusCode: response.status,
+    durationMs: duration,
+  });
 
   const arrayBuffer = await response.arrayBuffer();
   return {
@@ -185,6 +340,7 @@ module.exports = {
   getJson,
   getApiBaseUrl,
   getServiceDeskBaseUrl,
+  getEnvironmentInfo,
   postJson,
   postJsonWithMeta,
   putJson,

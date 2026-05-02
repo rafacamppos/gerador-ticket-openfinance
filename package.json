@@ -5,7 +5,11 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
+    "start:prod": "node src/index.js",
+    "start:sandbox": "APP_ENV=sandbox node src/index.js",
     "dev": "nodemon src/index.js",
+    "dev:prod": "nodemon src/index.js",
+    "dev:sandbox": "APP_ENV=sandbox nodemon src/index.js",
     "test": "NODE_ENV=test node --test"
   },
   "engines": {

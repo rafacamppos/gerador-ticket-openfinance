@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Run API - Local (.env)",
+      "name": "Run API - Production (.env)",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "node",
@@ -11,11 +11,11 @@
       "console": "integratedTerminal",
       "noDebug": true,
       "env": {
-        "APP_ENV": "local"
+        "APP_ENV": "producao"
       }
     },
     {
-      "name": "Debug API - Local (.env)",
+      "name": "Debug API - Production (.env)",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "node",
@@ -23,7 +23,7 @@
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "env": {
-        "APP_ENV": "local"
+        "APP_ENV": "producao"
       }
     },
     {
