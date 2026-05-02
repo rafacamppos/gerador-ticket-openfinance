@@ -1,0 +1,277 @@
+{
+  "info": {
+    "name": "Open Finance Categories API",
+    "description": "API endpoints para consulta de categorias de templates",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "List All Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/open-finance/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "open-finance",
+                "categories"
+              ]
+            },
+            "description": "Retorna a lista completa de todas as categorias com seus 3 níveis, template associado e type.\n\nResposta esperada: Array de objetos com id, category_name, sub_category_name, third_level_category_name, template_id, type"
+          },
+          "response": [
+            {
+              "name": "Success - Categories List",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/open-finance/categories",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "open-finance",
+                    "categories"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"id\": 547,\n      \"category_name\": \"Erro na Jornada ou Dados\",\n      \"sub_category_name\": \"Obtendo um Consentimento\",\n      \"third_level_category_name\": \"Criação de Consentimento\",\n      \"template_id\": 123328,\n      \"type\": 1\n    },\n    {\n      \"id\": 564,\n      \"category_name\": \"Conformidade\",\n      \"sub_category_name\": \"Correções Necessárias em APIs\",\n      \"third_level_category_name\": \"Correções Necessárias em APIs\",\n      \"template_id\": 8794,\n      \"type\": 1\n    }\n  ],\n  \"count\": 2\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Category By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/open-finance/categories/547",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "open-finance",
+                "categories",
+                "547"
+              ]
+            },
+            "description": "Retorna os detalhes de uma categoria específica pelo ID.\n\nParâmetros:\n- categoryId (path): ID único da categoria (number)"
+          },
+          "response": [
+            {
+              "name": "Success - Category Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/open-finance/categories/547",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "open-finance",
+                    "categories",
+                    "547"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": 547,\n    \"category_name\": \"Erro na Jornada ou Dados\",\n    \"sub_category_name\": \"Obtendo um Consentimento\",\n    \"third_level_category_name\": \"Criação de Consentimento\",\n    \"template_id\": 123328,\n    \"type\": 1\n  }\n}"
+            },
+            {
+              "name": "Not Found - Category ID 999",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/open-finance/categories/999",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "open-finance",
+                    "categories",
+                    "999"
+                  ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Categoria não encontrada.\",\n  \"details\": {\n    \"categoryId\": 999\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Category By ID (Invalid - 400)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/open-finance/categories/abc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "open-finance",
+                "categories",
+                "abc"
+              ]
+            },
+            "description": "Teste: Enviar um categoryId inválido (não numérico)\n\nEsperado: Status 400 com mensagem de erro"
+          },
+          "response": [
+            {
+              "name": "Bad Request - Invalid ID",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/open-finance/categories/abc",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "open-finance",
+                    "categories",
+                    "abc"
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"ID da categoria inválido.\",\n  \"details\": {\n    \"categoryId\": \"abc\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Setup - Environment Variables",
+      "item": [
+        {
+          "name": "Set BaseURL to localhost",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.environment.set('baseUrl', 'http://localhost:3000');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3000/health",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Verificar se o servidor está rodando em localhost:3000"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "categoryId",
+      "value": "547",
+      "type": "string"
+    }
+  ]
+}

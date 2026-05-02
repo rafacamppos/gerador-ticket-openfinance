@@ -49,9 +49,12 @@ test('listTickets reuses cookie and cache from session when headers are absent',
     },
     headers: {},
     session: {
-      openFinanceSession: {
-        cookie: 'JSESSIONID=abc123',
-        cache: 'cached-login-state',
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+      openFinanceSessions: {
+        production: {
+          cookie: 'JSESSIONID=abc123',
+          cache: 'cached-login-state',
+        },
       },
     },
   };
@@ -86,9 +89,12 @@ test('listTickets ignores cookie and cache headers from request and keeps manage
       authorization: 'Bearer token',
     },
     session: {
-      openFinanceSession: {
-        cookie: 'JSESSIONID=session-cookie',
-        cache: 'session-cache',
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+      openFinanceSessions: {
+        production: {
+          cookie: 'JSESSIONID=session-cookie',
+          cache: 'session-cache',
+        },
       },
     },
   };
@@ -123,9 +129,12 @@ test('listTickets ignores local session cookie and still forwards upstream sessi
       cookie: 'open-finance.sid=local-session-id',
     },
     session: {
-      openFinanceSession: {
-        cookie: 'JSESSIONID=upstream-cookie',
-        cache: 'session-cache',
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+      openFinanceSessions: {
+        production: {
+          cookie: 'JSESSIONID=upstream-cookie',
+          cache: 'session-cache',
+        },
       },
     },
   };
@@ -162,7 +171,9 @@ test('listTickets creates external session automatically when none is stored', a
       assignedGroup: '10',
     },
     headers: {},
-    session: {},
+    session: {
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+    },
   };
   const res = createMockResponse();
 
@@ -172,7 +183,7 @@ test('listTickets creates external session automatically when none is stored', a
     });
 
     assert.strictEqual(res.statusCode, 200);
-    assert.deepStrictEqual(req.session.openFinanceSession, {
+    assert.deepStrictEqual(req.session.openFinanceSessions?.production, {
       cookie: 'JSESSIONID=auto-cookie',
       cache: 'auto-cache',
     });
@@ -211,9 +222,12 @@ test('listTickets refreshes external session automatically after upstream 401', 
     query: {},
     headers: {},
     session: {
-      openFinanceSession: {
-        cookie: 'JSESSIONID=expired-cookie',
-        cache: 'expired-cache',
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+      openFinanceSessions: {
+        production: {
+          cookie: 'JSESSIONID=expired-cookie',
+          cache: 'expired-cache',
+        },
       },
     },
   };
@@ -225,7 +239,7 @@ test('listTickets refreshes external session automatically after upstream 401', 
     });
 
     assert.strictEqual(res.statusCode, 200);
-    assert.strictEqual(req.session.openFinanceSession.cookie, 'JSESSIONID=renewed-cookie-1');
+    assert.strictEqual(req.session.openFinanceSessions?.production?.cookie, 'JSESSIONID=renewed-cookie-1');
   } finally {
     service.createSession = originalCreateSession;
     service.listTickets = originalListTickets;
@@ -265,9 +279,12 @@ test('listTickets refreshes external session automatically after upstream captch
       cache: 'request-cache',
     },
     session: {
-      openFinanceSession: {
-        cookie: 'JSESSIONID=expired-cookie',
-        cache: 'expired-cache',
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+      openFinanceSessions: {
+        production: {
+          cookie: 'JSESSIONID=expired-cookie',
+          cache: 'expired-cache',
+        },
       },
     },
   };
@@ -279,7 +296,7 @@ test('listTickets refreshes external session automatically after upstream captch
     });
 
     assert.strictEqual(res.statusCode, 200);
-    assert.strictEqual(req.session.openFinanceSession.cookie, 'JSESSIONID=renewed-cookie-2');
+    assert.strictEqual(req.session.openFinanceSessions?.production?.cookie, 'JSESSIONID=renewed-cookie-2');
     assert.strictEqual(listTicketCalls.length, 2);
     assert.strictEqual(listTicketCalls[0].headers.cookie, 'JSESSIONID=expired-cookie');
     assert.strictEqual(listTicketCalls[1].headers.cookie, 'JSESSIONID=renewed-cookie-2');
@@ -351,9 +368,12 @@ test('listTickets forwards service errors to next without writing response', asy
     query: {},
     headers: {},
     session: {
-      openFinanceSession: {
-        cookie: 'JSESSIONID=abc123',
-        cache: 'cached-login-state',
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+      openFinanceSessions: {
+        production: {
+          cookie: 'JSESSIONID=abc123',
+          cache: 'cached-login-state',
+        },
       },
     },
   };
@@ -508,9 +528,12 @@ test('getTicketById returns ticket detail from service', async () => {
     },
     headers: {},
     session: {
-      openFinanceSession: {
-        cookie: 'JSESSIONID=abc123',
-        cache: 'cached-login-state',
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+      openFinanceSessions: {
+        production: {
+          cookie: 'JSESSIONID=abc123',
+          cache: 'cached-login-state',
+        },
       },
     },
   };
@@ -543,9 +566,12 @@ test('getTicketById forwards service errors to next without writing response', a
     },
     headers: {},
     session: {
-      openFinanceSession: {
-        cookie: 'JSESSIONID=abc123',
-        cache: 'cached-login-state',
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+      openFinanceSessions: {
+        production: {
+          cookie: 'JSESSIONID=abc123',
+          cache: 'cached-login-state',
+        },
       },
     },
   };
@@ -585,9 +611,12 @@ test('createTicket forwards body and query to service and returns 201', async ()
     },
     headers: {},
     session: {
-      openFinanceSession: {
-        cookie: 'JSESSIONID=abc123',
-        cache: 'cached-login-state',
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+      openFinanceSessions: {
+        production: {
+          cookie: 'JSESSIONID=abc123',
+          cache: 'cached-login-state',
+        },
       },
     },
   };
@@ -621,9 +650,12 @@ test('createTicket forwards empty body to service', async () => {
     },
     headers: {},
     session: {
-      openFinanceSession: {
-        cookie: 'JSESSIONID=abc123',
-        cache: 'cached-login-state',
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+      openFinanceSessions: {
+        production: {
+          cookie: 'JSESSIONID=abc123',
+          cache: 'cached-login-state',
+        },
       },
     },
   };
@@ -657,9 +689,12 @@ test('createTicket forwards service errors to next without writing response', as
     },
     headers: {},
     session: {
-      openFinanceSession: {
-        cookie: 'JSESSIONID=abc123',
-        cache: 'cached-login-state',
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+      openFinanceSessions: {
+        production: {
+          cookie: 'JSESSIONID=abc123',
+          cache: 'cached-login-state',
+        },
       },
     },
   };
@@ -694,9 +729,12 @@ test('updateTicket forwards body to service and returns updated ticket', async (
     },
     headers: {},
     session: {
-      openFinanceSession: {
-        cookie: 'JSESSIONID=abc123',
-        cache: 'cached-login-state',
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+      openFinanceSessions: {
+        production: {
+          cookie: 'JSESSIONID=abc123',
+          cache: 'cached-login-state',
+        },
       },
     },
   };
@@ -730,9 +768,12 @@ test('updateTicket forwards service errors to next without writing response', as
     body: {},
     headers: {},
     session: {
-      openFinanceSession: {
-        cookie: 'JSESSIONID=abc123',
-        cache: 'cached-login-state',
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+      openFinanceSessions: {
+        production: {
+          cookie: 'JSESSIONID=abc123',
+          cache: 'cached-login-state',
+        },
       },
     },
   };
@@ -770,9 +811,12 @@ test('createTicketAttachment forwards uploaded file to service and returns 201',
     },
     headers: {},
     session: {
-      openFinanceSession: {
-        cookie: 'JSESSIONID=abc123',
-        cache: 'cached-login-state',
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+      openFinanceSessions: {
+        production: {
+          cookie: 'JSESSIONID=abc123',
+          cache: 'cached-login-state',
+        },
       },
     },
   };
@@ -807,9 +851,12 @@ test('createTicketAttachment forwards missing file to service', async () => {
     },
     headers: {},
     session: {
-      openFinanceSession: {
-        cookie: 'JSESSIONID=abc123',
-        cache: 'cached-login-state',
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+      openFinanceSessions: {
+        production: {
+          cookie: 'JSESSIONID=abc123',
+          cache: 'cached-login-state',
+        },
       },
     },
   };
@@ -842,9 +889,12 @@ test('createTicketAttachment forwards service errors to next without writing res
     },
     headers: {},
     session: {
-      openFinanceSession: {
-        cookie: 'JSESSIONID=abc123',
-        cache: 'cached-login-state',
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+      openFinanceSessions: {
+        production: {
+          cookie: 'JSESSIONID=abc123',
+          cache: 'cached-login-state',
+        },
       },
     },
   };
@@ -883,9 +933,12 @@ test('createTicketActivity forwards body to service and returns 201', async () =
     },
     headers: {},
     session: {
-      openFinanceSession: {
-        cookie: 'JSESSIONID=abc123',
-        cache: 'cached-login-state',
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+      openFinanceSessions: {
+        production: {
+          cookie: 'JSESSIONID=abc123',
+          cache: 'cached-login-state',
+        },
       },
     },
   };
@@ -919,9 +972,12 @@ test('createTicketActivity forwards empty body to service', async () => {
     body: {},
     headers: {},
     session: {
-      openFinanceSession: {
-        cookie: 'JSESSIONID=abc123',
-        cache: 'cached-login-state',
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+      openFinanceSessions: {
+        production: {
+          cookie: 'JSESSIONID=abc123',
+          cache: 'cached-login-state',
+        },
       },
     },
   };
@@ -955,9 +1011,12 @@ test('createTicketActivity forwards service errors to next without writing respo
     body: {},
     headers: {},
     session: {
-      openFinanceSession: {
-        cookie: 'JSESSIONID=abc123',
-        cache: 'cached-login-state',
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+      openFinanceSessions: {
+        production: {
+          cookie: 'JSESSIONID=abc123',
+          cache: 'cached-login-state',
+        },
       },
     },
   };
@@ -994,9 +1053,12 @@ test('downloadTicketAttachment sets response headers and sends binary payload', 
     },
     headers: {},
     session: {
-      openFinanceSession: {
-        cookie: 'JSESSIONID=abc123',
-        cache: 'cached-login-state',
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+      openFinanceSessions: {
+        production: {
+          cookie: 'JSESSIONID=abc123',
+          cache: 'cached-login-state',
+        },
       },
     },
   };
@@ -1031,9 +1093,12 @@ test('downloadTicketAttachment forwards service errors to next without writing r
     },
     headers: {},
     session: {
-      openFinanceSession: {
-        cookie: 'JSESSIONID=abc123',
-        cache: 'cached-login-state',
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+      openFinanceSessions: {
+        production: {
+          cookie: 'JSESSIONID=abc123',
+          cache: 'cached-login-state',
+        },
       },
     },
   };
@@ -1068,9 +1133,12 @@ test('listRequiredTemplateFields returns template fields from service', async ()
     },
     headers: {},
     session: {
-      openFinanceSession: {
-        cookie: 'JSESSIONID=abc123',
-        cache: 'cached-login-state',
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+      openFinanceSessions: {
+        production: {
+          cookie: 'JSESSIONID=abc123',
+          cache: 'cached-login-state',
+        },
       },
     },
   };
@@ -1106,9 +1174,12 @@ test('listRequiredTemplateFields forwards empty query to service', async () => {
     query: {},
     headers: {},
     session: {
-      openFinanceSession: {
-        cookie: 'JSESSIONID=abc123',
-        cache: 'cached-login-state',
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+      openFinanceSessions: {
+        production: {
+          cookie: 'JSESSIONID=abc123',
+          cache: 'cached-login-state',
+        },
       },
     },
   };
@@ -1142,9 +1213,12 @@ test('listRequiredTemplateFields forwards service errors to next without writing
     query: {},
     headers: {},
     session: {
-      openFinanceSession: {
-        cookie: 'JSESSIONID=abc123',
-        cache: 'cached-login-state',
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+      openFinanceSessions: {
+        production: {
+          cookie: 'JSESSIONID=abc123',
+          cache: 'cached-login-state',
+        },
       },
     },
   };

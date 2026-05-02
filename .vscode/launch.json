@@ -1,0 +1,55 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run API - Local (.env)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "program": "${workspaceFolder}/src/index.js",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "noDebug": true,
+      "env": {
+        "APP_ENV": "local"
+      }
+    },
+    {
+      "name": "Debug API - Local (.env)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "program": "${workspaceFolder}/src/index.js",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": {
+        "APP_ENV": "local"
+      }
+    },
+    {
+      "name": "Run API - Sandbox (.env.sandbox)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "program": "${workspaceFolder}/src/index.js",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "noDebug": true,
+      "env": {
+        "APP_ENV": "sandbox"
+      }
+    },
+    {
+      "name": "Debug API - Sandbox (.env.sandbox)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "program": "${workspaceFolder}/src/index.js",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": {
+        "APP_ENV": "sandbox"
+      }
+    }
+  ]
+}

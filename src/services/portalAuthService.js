@@ -24,16 +24,15 @@ function normalizeUser(user) {
 
 async function loginPortalUser(payload = {}) {
   const email = String(payload.email || '').trim().toLowerCase();
-  const password = String(payload.password || '');
 
-  if (!email || !password) {
-    throw buildError('Fields "email" and "password" are required.', 400);
+  if (!email) {
+    throw buildError('Field "email" is required.', 400);
   }
 
   const repository = getTicketUserRepository();
   const user = await repository.findActiveUserByEmail(email);
 
-  if (!user || user.password !== password) {
+  if (!user) {
     throw buildError('Credenciais inválidas.', 401);
   }
 

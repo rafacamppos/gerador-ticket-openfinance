@@ -12,6 +12,9 @@ CREATE TABLE IF NOT EXISTS ticket_flow_states (
   returned_to_su BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  category_name VARCHAR(120),
+  sub_category_name VARCHAR(120),
+  third_level_category_name VARCHAR(120),
   CONSTRAINT chk_ticket_flow_states_stage CHECK (
     current_stage IN (
       'triage_su',

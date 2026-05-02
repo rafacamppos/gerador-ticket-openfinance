@@ -6,8 +6,14 @@ const {
 } = require('../services/openFinanceEnvironmentService');
 const logger = require('../utils/logger');
 
+function getOpenFinanceSessionKey(req) {
+  const environment = getStoredEnvironment(req);
+  return environment.key;
+}
+
 function ensureOpenFinanceSession(req, headers) {
-  const sessionState = req.session && req.session.openFinanceSession;
+  const envKey = getOpenFinanceSessionKey(req);
+  const sessionState = req.session?.openFinanceSessions?.[envKey];
 
   if (!headers.cookie && sessionState && sessionState.cookie) {
     headers.cookie = sessionState.cookie;
@@ -55,13 +61,18 @@ function shouldRefreshManagedSession(error) {
 }
 
 function hasStoredOpenFinanceSession(req) {
-  const sessionState = req.session && req.session.openFinanceSession;
+  const envKey = getOpenFinanceSessionKey(req);
+  const sessionState = req.session?.openFinanceSessions?.[envKey];
   return Boolean(sessionState?.cookie || sessionState?.cache);
 }
 
 function storeOpenFinanceSession(req, sessionState) {
   if (req.session) {
-    req.session.openFinanceSession = sessionState || null;
+    const envKey = getOpenFinanceSessionKey(req);
+    if (!req.session.openFinanceSessions) {
+      req.session.openFinanceSessions = {};
+    }
+    req.session.openFinanceSessions[envKey] = sessionState || null;
   }
 }
 

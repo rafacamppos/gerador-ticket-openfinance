@@ -4,12 +4,13 @@ const logger = require('../utils/logger');
 const {
   getRequestContext,
   persistSession,
+  storeOpenFinanceSession,
 } = require('./openFinanceControllerShared');
 
 async function createSession(req, res, next) {
   try {
     const response = await openFinanceAuthService.createSession(req.body, getRequestContext(req));
-    req.session.openFinanceSession = response.sessionState;
+    storeOpenFinanceSession(req, response.sessionState);
     await persistSession(req);
     logger.info('Open Finance session stored', {
       requestId: req.requestId || null,

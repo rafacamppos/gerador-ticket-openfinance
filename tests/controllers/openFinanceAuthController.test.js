@@ -91,7 +91,7 @@ test('createSession stores upstream cookie and cache in express session', async 
       idioma: 'pt',
       formato_data: 'dd-MM-yyyy HH:mm',
     });
-    assert.deepStrictEqual(req.session.openFinanceSession, {
+    assert.deepStrictEqual(req.session.openFinanceSessions?.production, {
       cookie: 'JSESSIONID=abc123',
       cache: 'cached-login-state',
     });
@@ -132,7 +132,7 @@ test('createSession accepts missing body and still stores upstream session', asy
     assert.deepStrictEqual(res.body, {
       sistema: { versao: 'v1' },
     });
-    assert.deepStrictEqual(req.session.openFinanceSession, {
+    assert.deepStrictEqual(req.session.openFinanceSessions?.production, {
       cookie: 'JSESSIONID=empty-body',
       cache: 'cache-empty-body',
     });
@@ -167,7 +167,7 @@ test('createSession forwards service errors to next without writing response', a
     assert.strictEqual(forwardedError, failure);
     assert.strictEqual(res.statusCode, null);
     assert.strictEqual(res.body, null);
-    assert.strictEqual(req.session.openFinanceSession, undefined);
+    assert.strictEqual(req.session.openFinanceSessions, undefined);
   } finally {
     service.createSession = originalCreateSession;
   }

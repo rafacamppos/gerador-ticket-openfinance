@@ -1,8 +1,31 @@
 const path = require('path');
+const fs = require('fs');
 const dotenv = require('dotenv');
 
 const projectRoot = path.resolve(__dirname, '..', '..');
-const projectEnvPath = path.join(projectRoot, '.env');
+const ENV_FILE_BY_NAME = {
+  producao: ['.env'],
+  sandbox: ['.env.sandbox'],
+};
+const DEFAULT_ENV_FILES = ['.env'];
+
+function resolveProjectEnvPath() {
+  const explicitEnvFile = String(process.env.ENV_FILE || '').trim();
+
+  if (explicitEnvFile) {
+    return path.isAbsolute(explicitEnvFile)
+      ? explicitEnvFile
+      : path.join(projectRoot, explicitEnvFile);
+  }
+
+  const appEnv = String(process.env.APP_ENV || '').trim().toLowerCase();
+  const envFiles = ENV_FILE_BY_NAME[appEnv] || (appEnv ? [`.env.${appEnv}`] : DEFAULT_ENV_FILES);
+
+  const existingEnvFile = envFiles.find((envFile) => fs.existsSync(path.join(projectRoot, envFile)));
+  return path.join(projectRoot, existingEnvFile || envFiles[0]);
+}
+
+const projectEnvPath = resolveProjectEnvPath();
 
 dotenv.config({ path: projectEnvPath });
 
@@ -26,6 +49,8 @@ if (isProduction && !process.env.OPEN_FINANCE_PASSWORD) {
 }
 
 module.exports = {
+  appEnv: process.env.APP_ENV || 'default',
+  envFilePath: projectEnvPath,
   port: Number(process.env.PORT) || 3000,
   sessionSecret: process.env.SESSION_SECRET || DEFAULT_SESSION_SECRET,
   sessionTtlSeconds: Number(process.env.SESSION_TTL_SECONDS) || 43200,

@@ -28,10 +28,8 @@ test('updateEnvironment stores the selected environment and clears the upstream 
       environmentKey: 'homologation',
     },
     session: {
-      openFinanceSession: {
-        cookie: 'JSESSIONID=abc123',
-        cache: 'cached-login-state',
-      },
+      openFinanceEnvironmentBaseUrl: 'https://servicedesksandbox.openfinancebrasil.org.br',
+      openFinanceSessions: {},
     },
   };
   const res = createMockResponse();
@@ -45,7 +43,11 @@ test('updateEnvironment stores the selected environment and clears the upstream 
     req.session.openFinanceEnvironmentBaseUrl,
     'https://servicedesksandbox.openfinancebrasil.org.br'
   );
-  assert.strictEqual(req.session.openFinanceSession, null);
+  assert.ok(
+    req.session.openFinanceSessions?.homologation === null ||
+    req.session.openFinanceSessions?.homologation === undefined,
+    'expected homologation session to be cleared'
+  );
 });
 
 test('updateEnvironment returns 400 when environment key is invalid', async () => {

@@ -102,7 +102,6 @@ CREATE TABLE IF NOT EXISTS api_versions (
   api_version VARCHAR(120) NOT NULL,
   product_feature VARCHAR(255) NOT NULL,
   stage_name_version VARCHAR(255) NOT NULL,
-  catalog_version_id BIGINT REFERENCES catalog_versions(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT uq_api_versions UNIQUE (api_name_version, api_version, product_feature, stage_name_version)

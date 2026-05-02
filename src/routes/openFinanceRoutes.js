@@ -5,6 +5,8 @@ const openFinanceApplicationIncidentsController = require('../controllers/openFi
 const openFinanceEnvironmentController = require('../controllers/openFinanceEnvironmentController');
 const openFinanceTicketFlowController = require('../controllers/openFinanceTicketFlowController');
 const openFinanceTicketsController = require('../controllers/openFinanceTicketsController');
+const { controller: categoryController } = require('../modules/categories');
+const categoryHierarchyController = require('../modules/categories/controllers/categoryHierarchyController');
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -66,5 +68,8 @@ router.get(
   '/ticket-templates/:templateId/required-fields',
   openFinanceTicketsController.listRequiredTemplateFields
 );
+router.get('/funcionalidades_categorias', categoryHierarchyController.list);
+router.get('/categories', categoryController.list);
+router.get('/categories/:categoryId', categoryController.getById);
 
 module.exports = router;
