@@ -38,7 +38,7 @@ async function getById(req, res, next) {
     });
   } catch (error) {
     if (error.status === 400 || error.status === 404) {
-      logger.warn(`Category operation failed: ${error.message}`, {
+      logger.info(`Category operation failed: ${error.message}`, {
         requestId: req.requestId || null,
         route: 'categories.getById',
         status: error.status,
