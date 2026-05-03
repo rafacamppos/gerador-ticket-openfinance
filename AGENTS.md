@@ -44,6 +44,7 @@ Antes de implementar qualquer feature:
 3. Confirmar nomes coerentes com a responsabilidade
 4. Evitar criar abstrações novas sem necessidade clara
 5. Preservar contratos existentes da API, salvo quando a tarefa exigir mudança explícita
+6. Backend não pode chamar api do próprio backend, deve utilizar a camada de repository, api é somente para fora do sistema.
 
 Ao implementar:
 - Manter consistência com rotas, controllers, services e repositories existentes

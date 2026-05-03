@@ -72,7 +72,7 @@ INSERT INTO category_templates (
   (502,  'Indisponibilidade Programada',          'Service Desk',                                   'Service Desk',                                                386,   1),
   (463,  'Solicitação de acesso',                 'Service Desk',                                   'Concessão Equipe N2',                                         43,    10),
   (259,  'Solicitação de acesso',                 'Service Desk',                                   'Concessão Requisitante',                                      39,    10),
-  (488,  'Solicitação de acesso',                 'Service Desk',                                   'Revogação Equipe N2',                                         789,   10),
+  (488,  'Solicitação de acesso',                 'Service Desk',                                   'Revogação Equipe N2',                                         789,   10)
 ON CONFLICT (id) DO UPDATE
 SET
   category_name              = EXCLUDED.category_name,
