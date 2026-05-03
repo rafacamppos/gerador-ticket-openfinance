@@ -18,11 +18,12 @@ async function createIncident(payload) {
         description,
         tipo_cliente,
         canal_jornada,
+        id_version_api,
         category_name,
         sub_category_name,
         third_level_category_name
       )
-      VALUES ($1, $2::uuid, $3::uuid, $4::uuid, $5, $6, $7::jsonb, $8::jsonb, $9::timestamptz, $10, $11, $12, $13, $14, $15, $16, $17)
+      VALUES ($1, $2::uuid, $3::uuid, $4::uuid, $5, $6, $7::jsonb, $8::jsonb, $9::timestamptz, $10, $11, $12, $13, $14, $15, $16, $17, $18)
       RETURNING *
     `,
     [
@@ -40,6 +41,7 @@ async function createIncident(payload) {
       payload.description,
       payload.tipo_cliente,
       payload.canal_jornada,
+      payload.id_version_api ?? null,
       payload.category_name || null,
       payload.sub_category_name || null,
       payload.third_level_category_name || null,
@@ -75,6 +77,10 @@ async function listIncidentsByOwnerSlug(ownerSlug, { limit = null, offset = 0 } 
         ai.related_ticket_id, ai.assigned_to_user_id,
         ai.created_at, ai.updated_at,
         ai.title, ai.description, ai.tipo_cliente, ai.canal_jornada,
+        ai.id_version_api,
+        ai.category_name AS incident_category_name,
+        ai.sub_category_name AS incident_sub_category_name,
+        ai.third_level_category_name AS incident_third_level_category_name,
         towner.slug AS team_slug,
         towner.name AS team_name,
         tu.name AS assigned_to_name,
@@ -107,6 +113,10 @@ async function getIncidentById(ownerSlug, incidentId) {
         ai.related_ticket_id, ai.assigned_to_user_id,
         ai.created_at, ai.updated_at,
         ai.title, ai.description, ai.tipo_cliente, ai.canal_jornada,
+        ai.id_version_api,
+        ai.category_name AS incident_category_name,
+        ai.sub_category_name AS incident_sub_category_name,
+        ai.third_level_category_name AS incident_third_level_category_name,
         towner.slug AS team_slug,
         towner.name AS team_name,
         tu.name AS assigned_to_name,
@@ -148,6 +158,10 @@ async function assignIncidentToUser(ownerSlug, incidentId, payload) {
           ai.related_ticket_id, ai.assigned_to_user_id,
           ai.created_at, ai.updated_at,
           ai.title, ai.description, ai.tipo_cliente, ai.canal_jornada,
+          ai.id_version_api,
+          ai.category_name AS incident_category_name,
+          ai.sub_category_name AS incident_sub_category_name,
+          ai.third_level_category_name AS incident_third_level_category_name,
           towner.slug AS team_slug,
           towner.name AS team_name
       )
@@ -159,6 +173,10 @@ async function assignIncidentToUser(ownerSlug, incidentId, payload) {
         u.related_ticket_id, u.assigned_to_user_id,
         u.created_at, u.updated_at,
         u.title, u.description, u.tipo_cliente, u.canal_jornada,
+        u.id_version_api,
+        u.incident_category_name,
+        u.incident_sub_category_name,
+        u.incident_third_level_category_name,
         u.team_slug, u.team_name,
         tu.name AS assigned_to_name,
         tu.email AS assigned_to_email
@@ -197,6 +215,10 @@ async function transitionIncident(ownerSlug, incidentId, payload) {
           ai.related_ticket_id, ai.assigned_to_user_id,
           ai.created_at, ai.updated_at,
           ai.title, ai.description, ai.tipo_cliente, ai.canal_jornada,
+          ai.id_version_api,
+          ai.category_name AS incident_category_name,
+          ai.sub_category_name AS incident_sub_category_name,
+          ai.third_level_category_name AS incident_third_level_category_name,
           towner.slug AS team_slug,
           towner.name AS team_name
       )
@@ -208,6 +230,10 @@ async function transitionIncident(ownerSlug, incidentId, payload) {
         u.related_ticket_id, u.assigned_to_user_id,
         u.created_at, u.updated_at,
         u.title, u.description, u.tipo_cliente, u.canal_jornada,
+        u.id_version_api,
+        u.incident_category_name,
+        u.incident_sub_category_name,
+        u.incident_third_level_category_name,
         u.team_slug, u.team_name,
         tu.name AS assigned_to_name,
         tu.email AS assigned_to_email

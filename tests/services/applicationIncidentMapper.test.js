@@ -20,6 +20,10 @@ test('normalizeIncidentRow maps raw DB row to normalized shape', () => {
     occurred_at: '2025-01-15T10:30:00Z',
     http_status_code: 500,
     description: 'Erro ao processar consentimento',
+    id_version_api: 3,
+    category_name: 'Conformidade',
+    sub_category_name: 'Validação',
+    third_level_category_name: 'Dados',
     incident_status: 'new',
     related_ticket_id: 177888,
     assigned_to_user_id: 7,
@@ -40,6 +44,12 @@ test('normalizeIncidentRow maps raw DB row to normalized shape', () => {
   assert.strictEqual(result.occurred_at, '2025-01-15T10:30:00Z');
   assert.strictEqual(result.http_status_code, 500);
   assert.strictEqual(result.description, 'Erro ao processar consentimento');
+  assert.strictEqual(result.id_version_api, '3');
+  assert.deepStrictEqual(result.category_data, {
+    category_name: 'Conformidade',
+    sub_category_name: 'Validação',
+    third_level_category_name: 'Dados',
+  });
   assert.strictEqual(result.related_ticket_id, '177888');
   assert.strictEqual(result.assigned_to_user_id, '7');
   assert.ok(result.incident_status_label);
@@ -55,6 +65,8 @@ test('normalizeIncidentRow handles missing optional fields', () => {
   assert.strictEqual(result.description, null);
   assert.strictEqual(result.tipo_cliente, null);
   assert.strictEqual(result.canal_jornada, null);
+  assert.strictEqual(result.id_version_api, null);
+  assert.strictEqual(result.category_data, null);
 });
 
 test('normalizeIncidentRow returns empty objects for missing payloads', () => {
@@ -85,7 +97,27 @@ test('normalizeIncidentRow exposes ticket_context when template_id is present', 
   assert.strictEqual(result.ticket_context.api_name_version, 'Open Banking Brasil Consents API 3.0');
 });
 
-test('normalizeIncidentRow sets ticket_context to null when template_id is absent', () => {
+test('normalizeIncidentRow exposes API context when template_id is absent', () => {
+  const row = {
+    team_name: 'Consentimentos',
+    incident_category_name: 'Erro na Jornada ou Dados',
+    incident_sub_category_name: 'Obtendo um Consentimento',
+    incident_third_level_category_name: 'Criação de Consentimento',
+    api_name_version: 'Open Banking Brasil Consents API 3.0',
+    api_version: '3.0.0',
+    product_feature: 'Consentimentos',
+    stage_name_version: 'Consents v3.0',
+  };
+
+  const result = normalizeIncidentRow(row);
+
+  assert.notStrictEqual(result.ticket_context, null);
+  assert.strictEqual(result.ticket_context.template_id, null);
+  assert.strictEqual(result.ticket_context.category_name, 'Erro na Jornada ou Dados');
+  assert.strictEqual(result.ticket_context.api_name_version, 'Open Banking Brasil Consents API 3.0');
+});
+
+test('normalizeIncidentRow sets ticket_context to null when no ticket context is present', () => {
   const result = normalizeIncidentRow({ id: 1 });
   assert.strictEqual(result.ticket_context, null);
 });

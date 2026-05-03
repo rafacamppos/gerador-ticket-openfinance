@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS application_incidents (
   description VARCHAR(1024) NOT NULL,
   tipo_cliente VARCHAR(32) NOT NULL,
   canal_jornada VARCHAR(64) NOT NULL DEFAULT 'Não se aplica',
+  id_version_api BIGINT,
   category_name VARCHAR(255),
   sub_category_name VARCHAR(255),
   third_level_category_name VARCHAR(255),

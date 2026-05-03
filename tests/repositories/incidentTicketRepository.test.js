@@ -93,6 +93,29 @@ test('getIncidentTicketContext selects created_at and updated_at fields', async 
   }
 });
 
+test('getIncidentTicketContext resolves API version directly from incident id_version_api', async () => {
+  let captured = null;
+  const pool = {
+    async query(text, values) {
+      captured = { text, values };
+      return {
+        rows: [{ id: 10 }],
+      };
+    },
+  };
+  const { repository, restore } = loadRepositoryWithPool(pool);
+
+  try {
+    await repository.getIncidentTicketContext('time-a', '10');
+
+    assert.doesNotMatch(captured.text, /JOIN endpoints/i);
+    assert.match(captured.text, /LEFT JOIN api_versions av/i);
+    assert.match(captured.text, /ON av\.id = ai\.id_version_api/i);
+  } finally {
+    restore();
+  }
+});
+
 test('getTemplateFields queries ordered fields and returns rows', async () => {
   let captured = null;
   const pool = {

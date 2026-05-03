@@ -191,6 +191,8 @@ test('incident mapper and contracts expose normalized labels', () => {
       description: 'Erro ao criar consentimento',
       tipo_cliente: 'PF',
       canal_jornada: 'App to app',
+      id_version_api: null,
+      category_data: null,
       ticket_context: null,
       incident_status: 'assigned',
       incident_status_label: 'Atribuido',

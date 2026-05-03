@@ -11,6 +11,12 @@ const CANAL_JORNADA = {
   NA:                 'Não se aplica',
 };
 
+const CATEGORY_DATA_FIELDS = {
+  CATEGORY_NAME: 'category_name',
+  SUB_CATEGORY_NAME: 'sub_category_name',
+  THIRD_LEVEL_CATEGORY_NAME: 'third_level_category_name',
+};
+
 const INCIDENT_STATUS = {
   NEW: 'new',
   ASSIGNED: 'assigned',
@@ -35,6 +41,7 @@ function getIncidentStatusLabel(status) {
 
 module.exports = {
   CANAL_JORNADA,
+  CATEGORY_DATA_FIELDS,
   INCIDENT_STATUS,
   INCIDENT_STATUS_LABELS,
   TIPO_CLIENTE,

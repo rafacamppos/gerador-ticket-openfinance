@@ -21,6 +21,10 @@ async function getIncidentTicketContext(ownerSlug, incidentId) {
         ai.description,
         ai.tipo_cliente,
         ai.canal_jornada,
+        ai.id_version_api,
+        ai.category_name AS incident_category_name,
+        ai.sub_category_name AS incident_sub_category_name,
+        ai.third_level_category_name AS incident_third_level_category_name,
         ai.incident_status,
         ai.related_ticket_id,
         ai.assigned_to_user_id,
@@ -48,12 +52,8 @@ async function getIncidentTicketContext(ownerSlug, incidentId) {
         ON ct.category_name = ai.category_name
         AND ct.sub_category_name = ai.sub_category_name
         AND ct.third_level_category_name = ai.third_level_category_name
-      LEFT JOIN endpoints ep
-        ON ep.endpoint_url = ai.endpoint
-        AND ep.http_method = ai.method
-        AND ep.is_active   = TRUE
       LEFT JOIN api_versions av
-        ON av.id = ep.api_version_id
+        ON av.id = ai.id_version_api
       LEFT JOIN support_teams st
         ON st.auth_server = ai.authorization_server
         AND st.is_active  = TRUE

@@ -1,5 +1,6 @@
 const logger = require('../utils/logger');
 const incidentTicketRepository = require('../repositories/incidentTicketRepository');
+const { formatTemplatePayload } = require('../utils/templatePayloadFormatter');
 
 /**
  * GET /templates/:templateId/fields
@@ -43,29 +44,8 @@ async function getTemplateFields(req, res, next) {
       return;
     }
 
-    // Filtrar apenas campos obrigatórios e remover title/description
-    const requiredFields = fields.filter(field => field.is_required === true)
-      .filter(field => !['title', 'description'].includes(field.field_label_api));
-
-    // Validar se há campos obrigatórios após filtro
-    if (requiredFields.length === 0) {
-      logger.warn('Template has no required fields (after filtering)', {
-        requestId: req.requestId || null,
-        route: 'getTemplateFields',
-        templateId: Number(templateId),
-        totalFields: fields.length
-      });
-
-      res.status(404).json({
-        code: 'TEMPLATE_NO_REQUIRED_FIELDS',
-        message: 'Template não possui campos obrigatórios (além de title e description)',
-        details: { templateId: Number(templateId), totalFields: fields.length }
-      });
-      return;
-    }
-
     // Formatar resposta com informações detalhadas dos campos
-    const formattedFields = requiredFields.map(field => {
+    const formattedFields = fields.map(field => {
       const fieldObj = {
         context_key: field.context_key,
         field_name: field.field_name,
@@ -88,12 +68,12 @@ async function getTemplateFields(req, res, next) {
       fields: formattedFields
     };
 
-    logger.info('Template required fields retrieved', {
+    logger.info('Template fields retrieved', {
       requestId: req.requestId || null,
       route: 'getTemplateFields',
       templateId: Number(templateId),
       totalFields: fields.length,
-      requiredFieldsCount: requiredFields.length
+      fieldsCount: formattedFields.length
     });
 
     res.status(200).json({
@@ -110,6 +90,78 @@ async function getTemplateFields(req, res, next) {
   }
 }
 
+/**
+ * GET /templates/:templateId/payload
+ * Retorna o payload formatado do template (context_key -> field_name)
+ */
+async function getTemplatePayload(req, res, next) {
+  try {
+    const { templateId } = req.params;
+
+    if (!templateId || Number.isNaN(Number(templateId))) {
+      logger.warn('Invalid template ID', {
+        requestId: req.requestId || null,
+        route: 'getTemplatePayload',
+        templateId
+      });
+
+      res.status(400).json({
+        code: 'INVALID_TEMPLATE_ID',
+        message: 'ID do template inválido',
+        details: { templateId }
+      });
+      return;
+    }
+
+    const fields = await incidentTicketRepository.getTemplateFields(Number(templateId));
+
+    if (!fields || fields.length === 0) {
+      logger.warn('Template not found or has no fields', {
+        requestId: req.requestId || null,
+        route: 'getTemplatePayload',
+        templateId: Number(templateId)
+      });
+
+      res.status(404).json({
+        code: 'TEMPLATE_NOT_FOUND',
+        message: 'Template não encontrado ou não possui campos definidos',
+        details: { templateId: Number(templateId) }
+      });
+      return;
+    }
+
+    const templateResponse = {
+      data: {
+        template_id: Number(templateId),
+        fields_count: fields.length,
+        fields: fields
+      }
+    };
+
+    const payload = formatTemplatePayload(templateResponse);
+
+    logger.info('Template payload formatted', {
+      requestId: req.requestId || null,
+      route: 'getTemplatePayload',
+      templateId: Number(templateId),
+      fieldsCount: fields.length
+    });
+
+    res.status(200).json({
+      data: payload.data
+    });
+  } catch (error) {
+    logger.error('Error formatting template payload', {
+      requestId: req.requestId || null,
+      route: 'getTemplatePayload',
+      error: error.message
+    });
+
+    next(error);
+  }
+}
+
 module.exports = {
-  getTemplateFields
+  getTemplateFields,
+  getTemplatePayload
 };

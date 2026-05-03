@@ -1,5 +1,9 @@
 const { buildError } = require('./openFinanceServiceErrors');
-const { TIPO_CLIENTE, CANAL_JORNADA } = require('../contracts/applicationIncidentContract');
+const {
+  CATEGORY_DATA_FIELDS,
+  TIPO_CLIENTE,
+  CANAL_JORNADA,
+} = require('../contracts/applicationIncidentContract');
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -194,52 +198,101 @@ function normalizeRelatedTicketId(value, { required = false } = {}) {
   return normalizedValue;
 }
 
-function normalizeCategoryName(value) {
-  const normalizedValue = String(value || '').trim();
+function normalizeIdVersionApi(value, { required = false } = {}) {
+  if (value === null || value === undefined || value === '') {
+    if (required) {
+      throw buildError('Field "id_version_api" is required.');
+    }
 
-  if (!normalizedValue) {
-    throw buildError('Field "category_name" is required.');
+    return null;
   }
 
-  if (normalizedValue.length > 255) {
-    throw buildError('Field "category_name" must be at most 255 characters.');
-  }
-
-  return normalizedValue;
-}
-
-function normalizeSubCategoryName(value) {
-  const normalizedValue = String(value || '').trim();
-
-  if (!normalizedValue) {
-    throw buildError('Field "sub_category_name" is required.');
-  }
-
-  if (normalizedValue.length > 255) {
-    throw buildError('Field "sub_category_name" must be at most 255 characters.');
+  const normalizedValue = Number(value);
+  if (!Number.isInteger(normalizedValue) || normalizedValue <= 0) {
+    throw buildError('Field "id_version_api" must be a positive integer.');
   }
 
   return normalizedValue;
 }
 
-function normalizeThirdLevelCategoryName(value) {
+function normalizeCategoryName(value, fieldName = CATEGORY_DATA_FIELDS.CATEGORY_NAME) {
   const normalizedValue = String(value || '').trim();
 
   if (!normalizedValue) {
-    throw buildError('Field "third_level_category_name" is required.');
+    throw buildError(`Field "${fieldName}" is required.`);
   }
 
   if (normalizedValue.length > 255) {
-    throw buildError('Field "third_level_category_name" must be at most 255 characters.');
+    throw buildError(`Field "${fieldName}" must be at most 255 characters.`);
   }
 
   return normalizedValue;
+}
+
+function normalizeSubCategoryName(value, fieldName = CATEGORY_DATA_FIELDS.SUB_CATEGORY_NAME) {
+  const normalizedValue = String(value || '').trim();
+
+  if (!normalizedValue) {
+    throw buildError(`Field "${fieldName}" is required.`);
+  }
+
+  if (normalizedValue.length > 255) {
+    throw buildError(`Field "${fieldName}" must be at most 255 characters.`);
+  }
+
+  return normalizedValue;
+}
+
+function normalizeThirdLevelCategoryName(
+  value,
+  fieldName = CATEGORY_DATA_FIELDS.THIRD_LEVEL_CATEGORY_NAME
+) {
+  const normalizedValue = String(value || '').trim();
+
+  if (!normalizedValue) {
+    throw buildError(`Field "${fieldName}" is required.`);
+  }
+
+  if (normalizedValue.length > 255) {
+    throw buildError(`Field "${fieldName}" must be at most 255 characters.`);
+  }
+
+  return normalizedValue;
+}
+
+function normalizeCategoryData(value, fallback = {}) {
+  if (
+    value !== null &&
+    value !== undefined &&
+    (typeof value !== 'object' || Array.isArray(value))
+  ) {
+    throw buildError('Field "category_data" must be a valid JSON object.');
+  }
+
+  const source = value || fallback;
+
+  return {
+    category_name: normalizeCategoryName(
+      source.category_name,
+      'category_data.category_name'
+    ),
+    sub_category_name: normalizeSubCategoryName(
+      source.sub_category_name,
+      'category_data.sub_category_name'
+    ),
+    third_level_category_name: normalizeThirdLevelCategoryName(
+      source.third_level_category_name,
+      'category_data.third_level_category_name'
+    ),
+  };
 }
 
 module.exports = {
   normalizeCanalJornada,
+  normalizeCategoryData,
   normalizeCategoryName,
   normalizeDescription,
+  normalizeIdVersionApi,
   normalizeSubCategoryName,
   normalizeThirdLevelCategoryName,
   normalizeTitle,

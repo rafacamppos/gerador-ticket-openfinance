@@ -75,6 +75,10 @@ test('createIncident persists serialized payloads and returns first row', async 
       description: 'Erro',
       tipo_cliente: 'PF',
       canal_jornada: 'App to app',
+      id_version_api: 3,
+      category_name: 'Conformidade',
+      sub_category_name: 'Validação',
+      third_level_category_name: 'Dados',
     });
 
     assert.deepStrictEqual(response, { id: 10 });
@@ -94,6 +98,10 @@ test('createIncident persists serialized payloads and returns first row', async 
       'Erro',
       'PF',
       'App to app',
+      3,
+      'Conformidade',
+      'Validação',
+      'Dados',
     ]);
   } finally {
     restore();

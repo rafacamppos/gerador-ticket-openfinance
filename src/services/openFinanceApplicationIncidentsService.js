@@ -6,15 +6,14 @@ const incidentTicketRepository = require('../repositories/incidentTicketReposito
 const { normalizeIncidentRow } = require('./applicationIncidentMapper');
 const {
   normalizeCanalJornada,
-  normalizeCategoryName,
+  normalizeCategoryData,
   normalizeDescription,
-  normalizeSubCategoryName,
-  normalizeThirdLevelCategoryName,
   normalizeTitle,
   normalizeTipoCliente,
   normalizeEndpoint,
   normalizeHttpMethod,
   normalizeHttpStatusCode,
+  normalizeIdVersionApi,
   normalizeJsonPayload,
   normalizeRelatedTicketId,
   normalizeTeamSlug,
@@ -28,6 +27,8 @@ async function reportApplicationIncident(teamSlug, payload = {}) {
   if (!owner) {
     throw buildError('Equipe não encontrada.', 404);
   }
+
+  const normalizedCategoryData = normalizeCategoryData(payload.category_data, payload);
 
   const normalizedPayload = {
     ticket_owner_id: owner.id,
@@ -55,9 +56,10 @@ async function reportApplicationIncident(teamSlug, payload = {}) {
     occurred_at: normalizeTimestamp(payload.occurred_at),
     http_status_code: normalizeHttpStatusCode(payload.http_status_code),
     description: normalizeDescription(payload.description),
-    category_name: normalizeCategoryName(payload.category_name),
-    sub_category_name: normalizeSubCategoryName(payload.sub_category_name),
-    third_level_category_name: normalizeThirdLevelCategoryName(payload.third_level_category_name),
+    id_version_api: normalizeIdVersionApi(payload.id_version_api, { required: true }),
+    category_name: normalizedCategoryData.category_name,
+    sub_category_name: normalizedCategoryData.sub_category_name,
+    third_level_category_name: normalizedCategoryData.third_level_category_name,
   };
 
   const createdIncident = await applicationIncidentRepository.createIncident(normalizedPayload);

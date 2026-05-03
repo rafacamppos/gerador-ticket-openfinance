@@ -12,6 +12,8 @@ const {
   normalizeHttpMethod,
   normalizeTimestamp,
   normalizeHttpStatusCode,
+  normalizeIdVersionApi,
+  normalizeCategoryData,
   normalizeRelatedTicketId,
 } = require('../../src/services/applicationIncidentValidation');
 
@@ -172,4 +174,52 @@ test('normalizeRelatedTicketId accepts valid ticket number', () => {
 
 test('normalizeRelatedTicketId throws for non-integer', () => {
   assert.throws(() => normalizeRelatedTicketId('abc'), /valid ticket number/i);
+});
+
+test('normalizeIdVersionApi returns null for optional empty value', () => {
+  assert.strictEqual(normalizeIdVersionApi(null), null);
+  assert.strictEqual(normalizeIdVersionApi(''), null);
+});
+
+test('normalizeIdVersionApi accepts positive integer', () => {
+  assert.strictEqual(normalizeIdVersionApi('123'), 123);
+});
+
+test('normalizeIdVersionApi throws for invalid value', () => {
+  assert.throws(() => normalizeIdVersionApi('abc'), /positive integer/i);
+  assert.throws(() => normalizeIdVersionApi(0), /positive integer/i);
+});
+
+test('normalizeCategoryData accepts nested category fields', () => {
+  assert.deepStrictEqual(
+    normalizeCategoryData({
+      category_name: ' Conformidade ',
+      sub_category_name: ' Validação ',
+      third_level_category_name: ' Dados ',
+    }),
+    {
+      category_name: 'Conformidade',
+      sub_category_name: 'Validação',
+      third_level_category_name: 'Dados',
+    }
+  );
+});
+
+test('normalizeCategoryData falls back to legacy top-level category fields', () => {
+  assert.deepStrictEqual(
+    normalizeCategoryData(undefined, {
+      category_name: 'Conformidade',
+      sub_category_name: 'Validação',
+      third_level_category_name: 'Dados',
+    }),
+    {
+      category_name: 'Conformidade',
+      sub_category_name: 'Validação',
+      third_level_category_name: 'Dados',
+    }
+  );
+});
+
+test('normalizeCategoryData throws for invalid object', () => {
+  assert.throws(() => normalizeCategoryData([]), /category_data/i);
 });

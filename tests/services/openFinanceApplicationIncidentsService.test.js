@@ -42,9 +42,12 @@ test('reportApplicationIncident validates, resolves owner and persists incident'
         occurred_at: '2026-03-29T10:15:00.000Z',
         http_status_code: 500,
         description: 'Erro ao processar consentimento',
-        category_name: 'Conformidade',
-        sub_category_name: 'Validação',
-        third_level_category_name: 'Validação de Dados',
+        id_version_api: 3,
+        category_data: {
+          category_name: 'Conformidade',
+          sub_category_name: 'Validação',
+          third_level_category_name: 'Validação de Dados',
+        },
       }
     );
 
@@ -65,6 +68,12 @@ test('reportApplicationIncident validates, resolves owner and persists incident'
       occurred_at: '2026-03-29T10:15:00.000Z',
       http_status_code: 500,
       description: 'Erro ao processar consentimento',
+      id_version_api: '3',
+      category_data: {
+        category_name: 'Conformidade',
+        sub_category_name: 'Validação',
+        third_level_category_name: 'Validação de Dados',
+      },
       ticket_context: null,
       incident_status: 'new',
       incident_status_label: 'Novo',
@@ -95,12 +104,52 @@ test('reportApplicationIncident rejects invalid payload fields', async () => {
         occurred_at: 'invalid-date',
         http_status_code: 999,
         description: '',
-        category_name: '',
-        sub_category_name: '',
-        third_level_category_name: '',
+        category_data: {
+          category_name: '',
+          sub_category_name: '',
+          third_level_category_name: '',
+        },
       }),
     /teamSlug|x_fapi_interaction_id|authorization_server|client_id|endpoint|method|payload_request|payload_response|occurred_at|http_status_code|description|category_name|sub_category_name|third_level_category_name/i
   );
+});
+
+test('reportApplicationIncident requires id_version_api', async () => {
+  const originalGetActiveOwnerBySlug = ticketOwnerRepository.getActiveOwnerBySlug;
+  ticketOwnerRepository.getActiveOwnerBySlug = async (slug) => ({
+    id: 7,
+    slug,
+    name: 'Consentimentos Inbound',
+  });
+
+  try {
+    await assert.rejects(
+      () =>
+        applicationIncidentsService.reportApplicationIncident('consentimentos-inbound', {
+          x_fapi_interaction_id: '7f4f2946-d1f3-4c9e-9a2b-bd4e2f30d4a3',
+          authorization_server: '3c8c00be-f66b-4db2-a777-d833ee4d3d96',
+          client_id: '96cc36f8-11e1-4f3f-bbbe-9fd6cc4eb4b3',
+          title: 'Falha ao processar consentimento',
+          tipo_cliente: 'PF',
+          canal_jornada: 'APP_TO_APP',
+          endpoint: '/open-banking/consents/v3/consents',
+          method: 'POST',
+          payload_request: {},
+          payload_response: {},
+          occurred_at: '2026-03-29T10:15:00.000Z',
+          http_status_code: 500,
+          description: 'Erro ao processar consentimento',
+          category_data: {
+            category_name: 'Conformidade',
+            sub_category_name: 'Validação',
+            third_level_category_name: 'Validação de Dados',
+          },
+        }),
+      /id_version_api/i
+    );
+  } finally {
+    ticketOwnerRepository.getActiveOwnerBySlug = originalGetActiveOwnerBySlug;
+  }
 });
 
 test('listApplicationIncidents normalizes incidents by team', async () => {

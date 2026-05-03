@@ -66,9 +66,21 @@ test('templateFieldsController.getTemplateFields', async (t) => {
     }
   ];
 
-  await t.test('should return template fields successfully', async () => {
+  await t.test('should return all template fields (including title and description)', async () => {
+    const fieldsWithOptional = [
+      ...mockTemplateFields,
+      {
+        field_name: 'Campo Opcional',
+        field_label_api: 'CustomColumn999sr',
+        field_type: 'text',
+        is_required: false,
+        context_key: 'campo_opcional',
+        list_options: null
+      }
+    ];
+
     incidentTicketRepository.getTemplateFields = async (templateId) => {
-      return mockTemplateFields;
+      return fieldsWithOptional;
     };
 
     const res = createMockResponse();
@@ -83,16 +95,15 @@ test('templateFieldsController.getTemplateFields', async (t) => {
     assert.ok(res.jsonData);
     assert.ok(res.jsonData.data);
     assert.strictEqual(res.jsonData.data.template_id, 123330);
-    assert.strictEqual(res.jsonData.data.fields_count, 1);
-    assert.strictEqual(res.jsonData.data.fields.length, 1);
+    assert.strictEqual(res.jsonData.data.fields_count, 4);
+    assert.strictEqual(res.jsonData.data.fields.length, 4);
 
-    const field = res.jsonData.data.fields[0];
-    assert.strictEqual(field.context_key, 'canal_jornada');
-    assert.ok(field.field_name);
-    assert.strictEqual(field.field_type, 'list');
-    assert.strictEqual(field.is_required, true);
-    assert.ok(field.list_options);
-    assert.ok(!field.value); // value não deve existir
+    // Should return all fields: Título, Descrição, Canal da Jornada, Campo Opcional
+    assert.strictEqual(res.jsonData.data.fields[0].field_name, 'Título');
+    assert.strictEqual(res.jsonData.data.fields[1].field_name, 'Descrição');
+    assert.strictEqual(res.jsonData.data.fields[2].field_name, 'Canal da Jornada');
+    assert.strictEqual(res.jsonData.data.fields[3].field_name, 'Campo Opcional');
+    assert.ok(!res.jsonData.data.fields[0].value); // value não deve existir
   });
 
   await t.test('should reject invalid template ID', async () => {

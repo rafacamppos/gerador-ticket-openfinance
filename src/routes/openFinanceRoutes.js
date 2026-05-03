@@ -71,6 +71,7 @@ router.get(
   openFinanceTicketsController.listRequiredTemplateFields
 );
 router.get('/templates/:templateId/fields', templateFieldsController.getTemplateFields);
+router.get('/templates/:templateId/payload', templateFieldsController.getTemplatePayload);
 router.get('/api-versions', apiVersionsController.listApiVersions);
 router.get('/api-versions/:id', apiVersionsController.getApiVersionById);
 router.get('/funcionalidades_categorias', categoryHierarchyController.list);
