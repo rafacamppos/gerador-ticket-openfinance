@@ -6,6 +6,7 @@ const openFinanceEnvironmentController = require('../controllers/openFinanceEnvi
 const openFinanceTicketFlowController = require('../controllers/openFinanceTicketFlowController');
 const openFinanceTicketsController = require('../controllers/openFinanceTicketsController');
 const templateFieldsController = require('../controllers/templateFieldsController');
+const apiVersionsController = require('../controllers/apiVersionsController');
 const { controller: categoryController } = require('../modules/categories');
 const categoryHierarchyController = require('../modules/categories/controllers/categoryHierarchyController');
 
@@ -70,6 +71,8 @@ router.get(
   openFinanceTicketsController.listRequiredTemplateFields
 );
 router.get('/templates/:templateId/fields', templateFieldsController.getTemplateFields);
+router.get('/api-versions', apiVersionsController.listApiVersions);
+router.get('/api-versions/:id', apiVersionsController.getApiVersionById);
 router.get('/funcionalidades_categorias', categoryHierarchyController.list);
 router.get('/categories', categoryController.list);
 router.get('/categories/:categoryId', categoryController.getById);

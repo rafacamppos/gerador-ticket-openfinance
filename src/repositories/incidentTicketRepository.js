@@ -82,7 +82,46 @@ async function getTemplateFields(templateId) {
   return result.rows;
 }
 
+async function listApiVersions() {
+  const result = await getPool().query(
+    `
+      SELECT
+        id,
+        api_name_version,
+        api_version,
+        product_feature,
+        stage_name_version,
+        created_at
+      FROM api_versions
+      ORDER BY api_name_version, product_feature, api_version ASC
+    `
+  );
+
+  return result.rows;
+}
+
+async function getApiVersionById(id) {
+  const result = await getPool().query(
+    `
+      SELECT
+        id,
+        api_name_version,
+        api_version,
+        product_feature,
+        stage_name_version,
+        created_at
+      FROM api_versions
+      WHERE id = $1
+    `,
+    [Number(id)]
+  );
+
+  return result.rows[0] || null;
+}
+
 module.exports = {
   getIncidentTicketContext,
   getTemplateFields,
+  listApiVersions,
+  getApiVersionById,
 };
