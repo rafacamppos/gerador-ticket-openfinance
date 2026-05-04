@@ -5,21 +5,52 @@ const applicationIncidentRepository = require('../repositories/applicationIncide
 const incidentTicketRepository = require('../repositories/incidentTicketRepository');
 const { normalizeIncidentRow } = require('./applicationIncidentMapper');
 const {
-  normalizeCanalJornada,
-  normalizeCategoryData,
-  normalizeDescription,
-  normalizeTitle,
-  normalizeTipoCliente,
-  normalizeEndpoint,
-  normalizeHttpMethod,
-  normalizeHttpStatusCode,
-  normalizeIdVersionApi,
-  normalizeJsonPayload,
   normalizeRelatedTicketId,
   normalizeTeamSlug,
-  normalizeTimestamp,
-  normalizeUuid,
+  validateAndNormalizePayloadBase,
 } = require('./applicationIncidentValidation');
+const { mergePayload } = require('./incidentPayloadMerger');
+
+/**
+ * Mapeamento de equivalências entre payload_base (inglês) e template_data (português)
+ */
+const BASE_TEMPLATE_FIELD_EQUIVALENCES = {
+  title: ['titulo', 'title'],
+  description: ['descricao', 'description'],
+};
+
+/**
+ * Filtra template_data para manter apenas campos que NÃO estão no payload_base
+ * Considera equivalências de nomes (ex: title = titulo, description = descricao)
+ */
+function filterTemplateDataFields(templateData, payloadBase) {
+  if (!templateData || typeof templateData !== 'object') {
+    return null;
+  }
+
+  const baseKeys = Object.keys(payloadBase || {});
+
+  // Criar conjunto de todos os nomes equivalentes do payload_base
+  const excludedKeys = new Set();
+  baseKeys.forEach(key => {
+    excludedKeys.add(key);
+    // Adicionar também os equivalentes
+    Object.entries(BASE_TEMPLATE_FIELD_EQUIVALENCES).forEach(([baseKey, equivalents]) => {
+      if (baseKey === key || equivalents.includes(key)) {
+        equivalents.forEach(eq => excludedKeys.add(eq));
+      }
+    });
+  });
+
+  const filtered = {};
+  Object.entries(templateData).forEach(([key, value]) => {
+    if (!excludedKeys.has(key)) {
+      filtered[key] = value;
+    }
+  });
+
+  return Object.keys(filtered).length > 0 ? filtered : null;
+}
 
 async function reportApplicationIncident(teamSlug, payload = {}) {
   const owner = await ticketOwnerRepository.getActiveOwnerBySlug(normalizeTeamSlug(teamSlug));
@@ -28,38 +59,35 @@ async function reportApplicationIncident(teamSlug, payload = {}) {
     throw buildError('Equipe não encontrada.', 404);
   }
 
-  const normalizedCategoryData = normalizeCategoryData(payload.category_data, payload);
+  const { template_data: templateData, ...baseFields } = payload;
+  const mergedPayload = mergePayload(baseFields, templateData);
+  const validatedPayload = validateAndNormalizePayloadBase(mergedPayload);
+
+  // Filtrar template_data para manter apenas campos que NÃO estão no baseFields
+  const filteredTemplateData = filterTemplateDataFields(templateData, baseFields);
 
   const normalizedPayload = {
     ticket_owner_id: owner.id,
     team_slug: owner.slug,
     team_name: owner.name,
-    x_fapi_interaction_id: normalizeUuid(
-      payload.x_fapi_interaction_id,
-      'x_fapi_interaction_id'
-    ),
-    authorization_server: normalizeUuid(
-      payload.authorization_server,
-      'authorization_server'
-    ),
-    client_id: normalizeUuid(
-      payload.client_id,
-      'client_id'
-    ),
-    title: normalizeTitle(payload.title),
-    tipo_cliente: normalizeTipoCliente(payload.tipo_cliente),
-    canal_jornada: normalizeCanalJornada(payload.canal_jornada),
-    endpoint: normalizeEndpoint(payload.endpoint),
-    method: normalizeHttpMethod(payload.method),
-    payload_request: normalizeJsonPayload(payload.payload_request, 'payload_request'),
-    payload_response: normalizeJsonPayload(payload.payload_response, 'payload_response'),
-    occurred_at: normalizeTimestamp(payload.occurred_at),
-    http_status_code: normalizeHttpStatusCode(payload.http_status_code),
-    description: normalizeDescription(payload.description),
-    id_version_api: normalizeIdVersionApi(payload.id_version_api, { required: true }),
-    category_name: normalizedCategoryData.category_name,
-    sub_category_name: normalizedCategoryData.sub_category_name,
-    third_level_category_name: normalizedCategoryData.third_level_category_name,
+    x_fapi_interaction_id: validatedPayload.x_fapi_interaction_id,
+    authorization_server: validatedPayload.authorization_server,
+    client_id: validatedPayload.client_id,
+    title: validatedPayload.title,
+    tipo_cliente: validatedPayload.tipo_cliente,
+    canal_jornada: validatedPayload.canal_jornada,
+    endpoint: validatedPayload.endpoint,
+    method: validatedPayload.http_method,
+    payload_request: validatedPayload.payload_request,
+    payload_response: validatedPayload.payload_response,
+    occurred_at: validatedPayload.occurred_at,
+    http_status_code: validatedPayload.http_status_code,
+    description: validatedPayload.description,
+    id_version_api: validatedPayload.id_version_api,
+    category_name: validatedPayload.category_data.category_name,
+    sub_category_name: validatedPayload.category_data.sub_category_name,
+    third_level_category_name: validatedPayload.category_data.third_level_category_name,
+    data_template: filteredTemplateData,
   };
 
   const createdIncident = await applicationIncidentRepository.createIncident(normalizedPayload);
@@ -124,7 +152,14 @@ async function assignApplicationIncidentToUser(teamSlug, incidentId, payload = {
     throw buildError('Incidente não encontrado.', 404);
   }
 
-  return normalizeIncidentRow(incident);
+  try {
+    return normalizeIncidentRow(incident);
+  } catch (error) {
+    console.error('Error normalizing incident:', error.message, {
+      incident: incident,
+    });
+    throw error;
+  }
 }
 
 async function transitionApplicationIncident(teamSlug, incidentId, payload = {}) {

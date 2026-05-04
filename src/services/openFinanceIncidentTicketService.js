@@ -8,6 +8,11 @@ const { normalizeIncidentRow } = require('./applicationIncidentMapper');
 const openFinanceDeskClient = require('../clients/openFinanceDeskClient');
 const { buildInitialStateSeed } = require('./ticketFlowTransitions');
 
+const CONTEXT_KEY_EQUIVALENCES = {
+  'titulo': 'title',
+  'descricao': 'description',
+};
+
 /**
  * Resolves a list field value using the field's list_options map.
  *
@@ -30,7 +35,20 @@ function resolveListOption(listOptions, rawValue) {
 }
 
 function extractFieldValue(field, context) {
-  const raw = context[field.context_key];
+  if (field.field_label_api === 'CustomColumn166sr') {
+    return 'Não se Aplica';
+  }
+
+  let raw = context[field.context_key];
+
+  if ((raw === undefined || raw === null) && CONTEXT_KEY_EQUIVALENCES[field.context_key]) {
+    raw = context[CONTEXT_KEY_EQUIVALENCES[field.context_key]];
+  }
+
+  if ((raw === undefined || raw === null) && context.data_template) {
+    raw = context.data_template[field.context_key];
+  }
+
   if (raw === undefined || raw === null || raw === '') return '';
 
   if (field.list_options) {
@@ -57,6 +75,7 @@ function buildBaseFields(context) {
   return [
     { key: 'title',                value: context.title || '' },
     { key: 'description',          value: context.description || '' },
+    { key: 'CustomColumn72sr',     value: context.client_id || '' },
     { key: 'problem_type',         value: buildProblemTypeValue(context) },
     {
       key: 'CustomColumn16sr',
@@ -65,6 +84,15 @@ function buildBaseFields(context) {
       valueCaption: 'N1 Service Desk',
       keyCaption: 'Equipe solucionadora',
     },
+  ];
+}
+
+function buildApiVersionFields(context) {
+  return [
+    { key: 'CustomColumn115sr', value: context.api_version || '' },
+    { key: 'CustomColumn165sr', value: context.product_feature || '' },
+    { key: 'CustomColumn114sr', value: context.stage_name_version || '' },
+    { key: 'CustomColumn166sr', value: 'Não se Aplica' },
   ];
 }
 
@@ -77,6 +105,8 @@ function buildInfoPayload(templateFields, context) {
     if (field.is_required && !value) {
       missing.push(field.field_name);
     }
+
+    console.log(`Template field ${field.field_label_api} (${field.context_key}): value="${value}"`);
 
     return { key: field.field_label_api, value };
   });
@@ -118,13 +148,32 @@ async function getTicketPreview(teamSlug, incidentId) {
 
   const templateFields = await incidentTicketRepository.getTemplateFields(ctx.template_id);
 
+  const baseFields = buildBaseFields(ctx);
+  const baseFieldsForPreview = baseFields.map((field) => ({
+    key:      field.key,
+    label:    field.keyCaption || field.key,
+    required: false,
+    value:    field.value,
+    options:  null,
+  }));
+
   return {
     template_id:   String(ctx.template_id),
     template_type: ctx.template_type,
     title:         ctx.title       || '',
     description:   ctx.description || '',
+    base_fields: baseFieldsForPreview,
     template_fields: templateFields.map((field) => {
-      const raw = ctx[field.context_key];
+      let raw = ctx[field.context_key];
+
+      if ((raw === undefined || raw === null) && CONTEXT_KEY_EQUIVALENCES[field.context_key]) {
+        raw = ctx[CONTEXT_KEY_EQUIVALENCES[field.context_key]];
+      }
+
+      if ((raw === undefined || raw === null) && ctx.data_template) {
+        raw = ctx.data_template[field.context_key];
+      }
+
       const value = raw === null || raw === undefined
         ? ''
         : typeof raw === 'object'
@@ -193,13 +242,32 @@ async function createTicketFromIncident(teamSlug, incidentId, payload, headers, 
     );
   }
 
+  console.log(`Template ${ctx.template_id} has ${templateFields.length} fields:`,
+    templateFields.map(f => ({ field_label_api: f.field_label_api, context_key: f.context_key }))
+  );
+
   const enrichedContext = {
     ...ctx,
-    title:       payload.title       || ctx.title       || '',
-    description: payload.description || ctx.description || '',
+    title:                payload.title                || ctx.title                || '',
+    description:          payload.description          || ctx.description          || '',
+    api_name_version:     payload.api_name_version     || ctx.api_name_version     || '',
+    api_version:          payload.api_version          || ctx.api_version          || '',
+    product_feature:      payload.product_feature      || ctx.product_feature      || '',
+    stage_name_version:   payload.stage_name_version   || ctx.stage_name_version   || '',
+    http_status_code:     payload.http_status_code     || ctx.http_status_code     || '',
   };
 
+  console.log('Enriched context for ticket creation:', {
+    client_id: enrichedContext.client_id,
+    api_name_version: enrichedContext.api_name_version,
+    api_version: enrichedContext.api_version,
+    product_feature: enrichedContext.product_feature,
+    stage_name_version: enrichedContext.stage_name_version,
+  });
+
   const baseFields = buildBaseFields(enrichedContext);
+  console.log('Base fields created:', baseFields.map(f => ({ key: f.key, value: f.value })));
+  const apiVersionFields = buildApiVersionFields(enrichedContext);
 
   let customFields;
   if (Array.isArray(payload.template_fields) && payload.template_fields.length > 0) {
@@ -219,11 +287,26 @@ async function createTicketFromIncident(teamSlug, incidentId, payload, headers, 
     customFields = autoInfo.filter((f) => !baseFields.some((b) => b.key === f.key));
   }
 
-  const info = [...baseFields, ...customFields];
+  // Remove duplicate api_version fields that may already exist in customFields
+  const customFieldKeys = new Set(customFields.map(f => f.key));
+  const apiVersionFieldsToAdd = apiVersionFields.filter(f => !customFieldKeys.has(f.key));
+
+  const info = [...baseFields, ...apiVersionFieldsToAdd, ...customFields];
+
+  const ticketPayload = { info };
+  console.log('Creating ticket from incident - ServiceDesk payload:', JSON.stringify({
+    incidentId: Number(incidentId),
+    teamSlug,
+    template: ctx.template_id,
+    type: ctx.template_type,
+    fieldsCount: info.length,
+    fields: info.map(f => ({ key: f.key, valueType: typeof f.value, hasValue: !!f.value })),
+    fullPayload: ticketPayload,
+  }, null, 2));
 
   const ticketResponse = await openFinanceDeskClient.postJson(
     '/sr',
-    { info },
+    ticketPayload,
     { template: ctx.template_id, type: ctx.template_type },
     headers,
     context

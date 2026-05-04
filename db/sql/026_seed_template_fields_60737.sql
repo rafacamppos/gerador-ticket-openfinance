@@ -3,7 +3,7 @@ INSERT INTO template_fields (
 ) VALUES
   (60737, 'Destinatário',                                          'CustomColumn38sr',  'text',              FALSE, 'destinatario',       NULL),
   (60737, 'Este problema ocorreu no processo de Onboarding de ITP ?', 'CustomColumn59sr', 'text',            FALSE, 'onboarding_itp',     NULL),
-  (60737, 'Nome e Versão da API',                                  'CustomColumn114sr', 'text',              TRUE,  'api_name_version',   NULL),
+  (60737, 'Nome e Versão da API',                                  'CustomColumn114sr', 'text',              TRUE, 'stage_name_version',   NULL),
   (60737, 'Versão API',                                            'CustomColumn115sr', 'text',              TRUE,  'api_version',        NULL),
   (60737, 'Produto/Funcionalidade',                                'CustomColumn165sr', 'text',              TRUE,  'product_feature',    NULL),
   (60737, 'Etapa(nome e versão api)',                              'CustomColumn166sr', 'text',              TRUE,  'stage_name_version', NULL),

@@ -15,13 +15,12 @@ const TIPO_CLIENTE_OPTIONS = { 'PF': '1', 'PJ': '2' };
 const CANAL_JORNADA_OPTIONS = { 'App to app': '1', 'App to browser': '2', 'Browser to browser': '3', 'Browser to app': '4', 'Não se aplica': '5' };
 
 const TEMPLATE_FIELDS_123328 = [
-  { field_name: 'Instituição Financeira Destinatária',         field_label_api: 'CustomColumn41sr',  field_type: 'text',              is_required: true,  context_key: 'destinatario',          list_options: null },
   { field_name: 'Seu client_id neste participante',            field_label_api: 'CustomColumn72sr',  field_type: 'text',              is_required: true,  context_key: 'client_id',             list_options: null },
   { field_name: 'URL do endpoint acionado',                    field_label_api: 'CustomColumn68sr',  field_type: 'long',              is_required: true,  context_key: 'endpoint',              list_options: null },
   { field_name: 'Headers e Payload da solicitação (Request)',  field_label_api: 'CustomColumn69sr',  field_type: 'long',              is_required: true,  context_key: 'payload_request',       list_options: null },
   { field_name: 'Código HTTP da resposta',                     field_label_api: 'CustomColumn229sr', field_type: 'list',              is_required: true,  context_key: 'http_status_code',      list_options: HTTP_STATUS_OPTIONS },
   { field_name: 'Headers e Payload da resposta (Response)',    field_label_api: 'CustomColumn71sr',  field_type: 'long',              is_required: true,  context_key: 'payload_response',      list_options: null },
-  { field_name: 'Nome e Versão da API',                        field_label_api: 'CustomColumn114sr', field_type: 'text',              is_required: true,  context_key: 'api_name_version',      list_options: null },
+  { field_name: 'Nome e Versão da API',                        field_label_api: 'CustomColumn114sr', field_type: 'text',              is_required: true,  context_key: 'stage_name_version',    list_options: null },
   { field_name: 'Versão API',                                  field_label_api: 'CustomColumn115sr', field_type: 'text',              is_required: true,  context_key: 'api_version',           list_options: null },
   { field_name: 'Produto/Funcionalidade',                      field_label_api: 'CustomColumn165sr', field_type: 'text',              is_required: true,  context_key: 'product_feature',       list_options: null },
   { field_name: 'Etapa(nome e versão api)',                    field_label_api: 'CustomColumn166sr', field_type: 'text',              is_required: true,  context_key: 'stage_name_version',    list_options: null },
@@ -90,14 +89,14 @@ test('buildInfoPayload builds full info array from enriched context', () => {
 
   const byKey = Object.fromEntries(info.map((e) => [e.key, e.value]));
 
-  assert.strictEqual(byKey.CustomColumn41sr,  'ITAÚ UNIBANCO S.A.');
+  assert.strictEqual(byKey.CustomColumn38sr,  'ITAÚ UNIBANCO S.A.');
   assert.strictEqual(byKey.CustomColumn72sr,  'client-uuid-0001');
   assert.strictEqual(byKey.CustomColumn68sr,  '/open-banking/consents/v3/consents');
   assert.strictEqual(byKey.CustomColumn229sr, '3');   // 422 → 4XX → '3'
-  assert.strictEqual(byKey.CustomColumn114sr, 'Open Banking Brasil Consents API 3.0');
+  assert.strictEqual(byKey.CustomColumn114sr, 'Consents v3.0');
   assert.strictEqual(byKey.CustomColumn115sr, '3.0.0');
   assert.strictEqual(byKey.CustomColumn165sr, 'Consentimentos');
-  assert.strictEqual(byKey.CustomColumn166sr, 'Consents v3.0');
+  assert.strictEqual(byKey.CustomColumn166sr, 'Não se Aplica');
   assert.strictEqual(byKey.CustomColumn16sr, 'N1 Service Desk');
   assert.strictEqual(byKey.CustomColumn120sr, '1');   // PF → '1'
   assert.strictEqual(byKey.CustomColumn174sr, '1');   // App to app → '1'
@@ -564,7 +563,7 @@ test('createTicketFromIncident creates ticket with automatic template payload an
             valueCaption: 'N1 Service Desk',
             keyCaption: 'Equipe solucionadora',
           },
-          { key: 'CustomColumn41sr', value: 'ITAÚ UNIBANCO S.A.' },
+          { key: 'CustomColumn38sr', value: 'ITAÚ UNIBANCO S.A.' },
           { key: 'CustomColumn229sr', value: '3' },
           { key: 'CustomColumn120sr', value: '1' },
         ],

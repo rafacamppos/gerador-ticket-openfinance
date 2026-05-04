@@ -7,7 +7,7 @@ INSERT INTO template_fields (
   (60743, 'Código HTTP da resposta',                    'CustomColumn229sr', 'list',              TRUE,  'http_status_code',   '{"429":"2","5xx":"4","4xx":"3","*":"1"}'),
   (60743, 'Headers e Payload da resposta (Response)',   'CustomColumn71sr',  'long',              TRUE,  'payload_response',   NULL),
   (60743, 'Tipo do Cliente',                            'CustomColumn120sr', 'list_multi_select', FALSE, 'tipo_cliente',       '{"PF":"1","PJ":"2"}'),
-  (60743, 'Nome e Versão da API',                       'CustomColumn114sr', 'text',              TRUE,  'api_name_version',   NULL),
+  (60743, 'Nome e Versão da API',                       'CustomColumn114sr', 'text',              TRUE, 'stage_name_version',   NULL),
   (60743, 'Versão API',                                 'CustomColumn115sr', 'text',              TRUE,  'api_version',        NULL),
   (60743, 'Produto/Funcionalidade',                     'CustomColumn165sr', 'text',              TRUE,  'product_feature',    NULL),
   (60743, 'Etapa(nome e versão api)',                   'CustomColumn166sr', 'text',              TRUE,  'stage_name_version', NULL)

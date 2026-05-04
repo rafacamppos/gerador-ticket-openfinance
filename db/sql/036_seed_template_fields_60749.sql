@@ -1,7 +1,7 @@
 INSERT INTO template_fields (
   template_id, field_name, field_label_api, field_type, is_required, context_key, list_options
 ) VALUES
-  (60749, 'Nome e Versão da API',     'CustomColumn114sr', 'text',              TRUE,  'api_name_version',   NULL),
+  (60749, 'Nome e Versão da API',     'CustomColumn114sr', 'text',              TRUE, 'stage_name_version',   NULL),
   (60749, 'Versão API',               'CustomColumn115sr', 'text',              TRUE,  'api_version',        NULL),
   (60749, 'Produto/Funcionalidade',   'CustomColumn165sr', 'text',              TRUE,  'product_feature',    NULL),
   (60749, 'Etapa(nome e versão api)', 'CustomColumn166sr', 'text',              TRUE,  'stage_name_version', NULL),

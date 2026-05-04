@@ -287,6 +287,40 @@ function normalizeCategoryData(value, fallback = {}) {
   };
 }
 
+/**
+ * Valida e normaliza o payload base completo
+ * Retorna um objeto com todos os campos validados
+ */
+function validateAndNormalizePayloadBase(payload) {
+  if (!payload || typeof payload !== 'object') {
+    throw buildError('Payload must be a valid JSON object.');
+  }
+
+  return {
+    x_fapi_interaction_id: normalizeUuid(
+      payload.x_fapi_interaction_id,
+      'x_fapi_interaction_id'
+    ),
+    authorization_server: normalizeUuid(
+      payload.authorization_server,
+      'authorization_server'
+    ),
+    client_id: normalizeUuid(payload.client_id, 'client_id'),
+    endpoint: normalizeEndpoint(payload.endpoint),
+    category_data: normalizeCategoryData(payload.category_data),
+    id_version_api: normalizeIdVersionApi(payload.id_version_api, { required: true }),
+    http_method: normalizeHttpMethod(payload.http_method),
+    payload_request: normalizeJsonPayload(payload.payload_request, 'payload_request'),
+    payload_response: normalizeJsonPayload(payload.payload_response, 'payload_response'),
+    occurred_at: normalizeTimestamp(payload.occurred_at),
+    description: normalizeDescription(payload.description),
+    title: normalizeTitle(payload.title),
+    canal_jornada: normalizeCanalJornada(payload.canal_jornada),
+    tipo_cliente: normalizeTipoCliente(payload.tipo_cliente),
+    http_status_code: normalizeHttpStatusCode(payload.http_status_code),
+  };
+}
+
 module.exports = {
   normalizeCanalJornada,
   normalizeCategoryData,
@@ -305,4 +339,5 @@ module.exports = {
   normalizeTeamSlug,
   normalizeTimestamp,
   normalizeUuid,
+  validateAndNormalizePayloadBase,
 };

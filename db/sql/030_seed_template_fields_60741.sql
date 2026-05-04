@@ -8,7 +8,7 @@ INSERT INTO template_fields (
   (60741, 'URL para qual o usuário deveria voltar',                    'CustomColumn77sr',  'long',              TRUE,  'url_retorno_usuario',   NULL),
   (60741, 'SSA da sua aplicação',                                      'CustomColumn78sr',  'long',              TRUE,  'ssa_aplicacao',         NULL),
   (60741, 'Tipo do Cliente',                                           'CustomColumn120sr', 'list_multi_select', FALSE, 'tipo_cliente',          '{"PF":"1","PJ":"2"}'),
-  (60741, 'Nome e Versão da API',                                      'CustomColumn114sr', 'text',              TRUE,  'api_name_version',      NULL),
+  (60741, 'Nome e Versão da API',                                      'CustomColumn114sr', 'text',              TRUE, 'stage_name_version',      NULL),
   (60741, 'Versão API',                                                'CustomColumn115sr', 'text',              TRUE,  'api_version',           NULL),
   (60741, 'Produto/Funcionalidade',                                    'CustomColumn165sr', 'text',              TRUE,  'product_feature',       NULL),
   (60741, 'Etapa(nome e versão api)',                                  'CustomColumn166sr', 'text',              TRUE,  'stage_name_version',    NULL)

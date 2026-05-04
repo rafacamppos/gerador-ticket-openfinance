@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS application_incidents (
   category_name VARCHAR(255),
   sub_category_name VARCHAR(255),
   third_level_category_name VARCHAR(255),
+  data_template JSONB,
   CONSTRAINT chk_application_incidents_tipo_cliente
     CHECK (tipo_cliente IN ('PF', 'PJ')),
   CONSTRAINT chk_application_incidents_canal_jornada

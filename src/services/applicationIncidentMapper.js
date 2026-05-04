@@ -38,6 +38,9 @@ function normalizeIncidentRow(row = {}) {
     assigned_to_name: row.assigned_to_name || null,
     assigned_to_email: row.assigned_to_email || null,
 
+    // template data (histórico)
+    data_template: row.data_template || null,
+
     created_at: row.created_at || null,
     updated_at: row.updated_at || null,
   };

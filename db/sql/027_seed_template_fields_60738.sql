@@ -3,7 +3,7 @@ INSERT INTO template_fields (
 ) VALUES
   (60738, 'Destinatário',                                  'CustomColumn38sr',  'text',              TRUE,  'destinatario',         NULL),
   (60738, 'Seu client_id nesta transmissora/detentora',    'CustomColumn79sr',  'text',              FALSE, 'client_id_transmissora', NULL),
-  (60738, 'Nome e Versão da API',                          'CustomColumn114sr', 'text',              TRUE,  'api_name_version',     NULL),
+  (60738, 'Nome e Versão da API',                          'CustomColumn114sr', 'text',              TRUE, 'stage_name_version',     NULL),
   (60738, 'Versão API',                                    'CustomColumn115sr', 'text',              TRUE,  'api_version',          NULL),
   (60738, 'Produto/Funcionalidade',                        'CustomColumn165sr', 'text',              TRUE,  'product_feature',      NULL),
   (60738, 'Etapa(nome e versão api)',                      'CustomColumn166sr', 'text',              TRUE,  'stage_name_version',   NULL),

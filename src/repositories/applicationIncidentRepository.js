@@ -21,9 +21,10 @@ async function createIncident(payload) {
         id_version_api,
         category_name,
         sub_category_name,
-        third_level_category_name
+        third_level_category_name,
+        data_template
       )
-      VALUES ($1, $2::uuid, $3::uuid, $4::uuid, $5, $6, $7::jsonb, $8::jsonb, $9::timestamptz, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+      VALUES ($1, $2::uuid, $3::uuid, $4::uuid, $5, $6, $7::jsonb, $8::jsonb, $9::timestamptz, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19::jsonb)
       RETURNING *
     `,
     [
@@ -45,6 +46,7 @@ async function createIncident(payload) {
       payload.category_name || null,
       payload.sub_category_name || null,
       payload.third_level_category_name || null,
+      payload.data_template ? JSON.stringify(payload.data_template) : null,
     ]
   );
 
@@ -77,19 +79,25 @@ async function listIncidentsByOwnerSlug(ownerSlug, { limit = null, offset = 0 } 
         ai.related_ticket_id, ai.assigned_to_user_id,
         ai.created_at, ai.updated_at,
         ai.title, ai.description, ai.tipo_cliente, ai.canal_jornada,
-        ai.id_version_api,
+        ai.id_version_api, ai.data_template,
         ai.category_name AS incident_category_name,
         ai.sub_category_name AS incident_sub_category_name,
         ai.third_level_category_name AS incident_third_level_category_name,
         towner.slug AS team_slug,
         towner.name AS team_name,
         tu.name AS assigned_to_name,
-        tu.email AS assigned_to_email
+        tu.email AS assigned_to_email,
+        av.api_name_version,
+        av.api_version,
+        av.product_feature,
+        av.stage_name_version
       FROM application_incidents ai
       JOIN ticket_owners towner
         ON towner.id = ai.ticket_owner_id
       LEFT JOIN ticket_users tu
         ON tu.id = ai.assigned_to_user_id
+      LEFT JOIN api_versions av
+        ON av.id = ai.id_version_api
       WHERE towner.slug = $1
         AND towner.is_active = TRUE
       ORDER BY ai.occurred_at DESC, ai.id DESC
@@ -113,19 +121,25 @@ async function getIncidentById(ownerSlug, incidentId) {
         ai.related_ticket_id, ai.assigned_to_user_id,
         ai.created_at, ai.updated_at,
         ai.title, ai.description, ai.tipo_cliente, ai.canal_jornada,
-        ai.id_version_api,
+        ai.id_version_api, ai.data_template,
         ai.category_name AS incident_category_name,
         ai.sub_category_name AS incident_sub_category_name,
         ai.third_level_category_name AS incident_third_level_category_name,
         towner.slug AS team_slug,
         towner.name AS team_name,
         tu.name AS assigned_to_name,
-        tu.email AS assigned_to_email
+        tu.email AS assigned_to_email,
+        av.api_name_version,
+        av.api_version,
+        av.product_feature,
+        av.stage_name_version
       FROM application_incidents ai
       JOIN ticket_owners towner
         ON towner.id = ai.ticket_owner_id
       LEFT JOIN ticket_users tu
         ON tu.id = ai.assigned_to_user_id
+      LEFT JOIN api_versions av
+        ON av.id = ai.id_version_api
       WHERE towner.slug = $1
         AND ai.id = $2
         AND towner.is_active = TRUE
@@ -158,7 +172,7 @@ async function assignIncidentToUser(ownerSlug, incidentId, payload) {
           ai.related_ticket_id, ai.assigned_to_user_id,
           ai.created_at, ai.updated_at,
           ai.title, ai.description, ai.tipo_cliente, ai.canal_jornada,
-          ai.id_version_api,
+          ai.id_version_api, ai.data_template,
           ai.category_name AS incident_category_name,
           ai.sub_category_name AS incident_sub_category_name,
           ai.third_level_category_name AS incident_third_level_category_name,
@@ -177,11 +191,17 @@ async function assignIncidentToUser(ownerSlug, incidentId, payload) {
         u.incident_category_name,
         u.incident_sub_category_name,
         u.incident_third_level_category_name,
+        u.data_template,
         u.team_slug, u.team_name,
         tu.name AS assigned_to_name,
-        tu.email AS assigned_to_email
+        tu.email AS assigned_to_email,
+        av.api_name_version,
+        av.api_version,
+        av.product_feature,
+        av.stage_name_version
       FROM updated u
       LEFT JOIN ticket_users tu ON tu.id = u.assigned_to_user_id
+      LEFT JOIN api_versions av ON av.id = u.id_version_api
     `,
     [
       ownerSlug,
@@ -215,7 +235,7 @@ async function transitionIncident(ownerSlug, incidentId, payload) {
           ai.related_ticket_id, ai.assigned_to_user_id,
           ai.created_at, ai.updated_at,
           ai.title, ai.description, ai.tipo_cliente, ai.canal_jornada,
-          ai.id_version_api,
+          ai.id_version_api, ai.data_template,
           ai.category_name AS incident_category_name,
           ai.sub_category_name AS incident_sub_category_name,
           ai.third_level_category_name AS incident_third_level_category_name,
@@ -234,11 +254,17 @@ async function transitionIncident(ownerSlug, incidentId, payload) {
         u.incident_category_name,
         u.incident_sub_category_name,
         u.incident_third_level_category_name,
+        u.data_template,
         u.team_slug, u.team_name,
         tu.name AS assigned_to_name,
-        tu.email AS assigned_to_email
+        tu.email AS assigned_to_email,
+        av.api_name_version,
+        av.api_version,
+        av.product_feature,
+        av.stage_name_version
       FROM updated u
       LEFT JOIN ticket_users tu ON tu.id = u.assigned_to_user_id
+      LEFT JOIN api_versions av ON av.id = u.id_version_api
     `,
     [
       ownerSlug,

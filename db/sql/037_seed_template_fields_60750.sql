@@ -8,7 +8,7 @@ INSERT INTO template_fields (
   (60750, 'Estado atual do consentimento',         'CustomColumn158sr', 'list',              TRUE,  'estado_consentimento',    NULL),
   (60750, 'O erro ocorre para um ou mais clientes?','CustomColumn159sr','text',              FALSE, 'erro_multiplos_clientes', NULL),
   (60750, 'Tipo do Cliente',                       'CustomColumn120sr', 'list_multi_select', FALSE, 'tipo_cliente',            '{"PF":"1","PJ":"2"}'),
-  (60750, 'Nome e Versão da API',                  'CustomColumn114sr', 'text',              TRUE,  'api_name_version',        NULL),
+  (60750, 'Nome e Versão da API',                  'CustomColumn114sr', 'text',              TRUE, 'stage_name_version',        NULL),
   (60750, 'Versão API',                            'CustomColumn115sr', 'text',              TRUE,  'api_version',             NULL),
   (60750, 'Produto/Funcionalidade',                'CustomColumn165sr', 'text',              TRUE,  'product_feature',         NULL),
   (60750, 'Etapa(nome e versão api)',              'CustomColumn166sr', 'text',              TRUE,  'stage_name_version',      NULL)

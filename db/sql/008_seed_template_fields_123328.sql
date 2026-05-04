@@ -7,13 +7,12 @@ INSERT INTO template_fields (
   context_key,
   list_options
 ) VALUES
-  (123328, 'Instituição Financeira Destinatária',        'CustomColumn41sr',  'text',              TRUE, 'destinatario',          NULL),
   (123328, 'Seu client_id neste participante',           'CustomColumn72sr',  'text',              TRUE, 'client_id',             NULL),
   (123328, 'URL do endpoint acionado',                   'CustomColumn68sr',  'long',              TRUE, 'endpoint',              NULL),
   (123328, 'Headers e Payload da solicitação (Request)', 'CustomColumn69sr',  'long',              TRUE, 'payload_request',       NULL),
   (123328, 'Código HTTP da resposta',                    'CustomColumn229sr', 'list',              TRUE, 'http_status_code',      '{"429":"2","5xx":"4","4xx":"3","*":"1"}'),
   (123328, 'Headers e Payload da resposta (Response)',   'CustomColumn71sr',  'long',              TRUE, 'payload_response',      NULL),
-  (123328, 'Nome e Versão da API',                       'CustomColumn114sr', 'text',              TRUE, 'api_name_version',      NULL),
+  (123328, 'Nome e Versão da API',                       'CustomColumn114sr', 'text',              TRUE, 'stage_name_version',    NULL),
   (123328, 'Versão API',                                 'CustomColumn115sr', 'text',              TRUE, 'api_version',           NULL),
   (123328, 'Produto/Funcionalidade',                     'CustomColumn165sr', 'text',              TRUE, 'product_feature',       NULL),
   (123328, 'Etapa(nome e versão api)',                   'CustomColumn166sr', 'text',              TRUE, 'stage_name_version',    NULL),
